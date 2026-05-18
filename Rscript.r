@@ -1,1 +1,2605 @@
+---
+title: Análise exploratória dos casos de dengue em Alagoinhas durante as semanas epidemiológicas (2015–2025) utilizando R
+author: "Luciano Pequeno"
+date: "2026-03"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    theme: default
+    highlight: tango
+    css: styles.css
+---
+
+
+
+<style type="text/css">
+
+/* ==================== CONFIGURAÇÕES GLOBAIS ==================== */
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
+  background-color: #f8fafc;
+}
+
+/* ==================== TÍTULOS ==================== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.3em;
+}
+
+h1 {
+  color: #1e466e;
+  font-size: 2.2em;
+  border-bottom: 3px solid #3498db;
+}
+
+h2 {
+  color: #2c5a7a;
+  font-size: 1.8em;
+  border-bottom: 2px solid #dee2e6;
+}
+
+h3 {
+  color: #3a6b8f;
+  font-size: 1.5em;
+  border-bottom: 1px solid #e9ecef;
+}
+
+h4 {
+  color: #4a7c9f;
+  font-size: 1.3em;
+}
+
+/* ==================== TABELA DE CONTEÚDO ==================== */
+#TOC {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+}
+
+#TOC li {
+  margin: 0.4rem 0;
+}
+
+#TOC a {
+  color: #2c5a7a;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+#TOC a:hover {
+  color: #e67e22;
+  text-decoration: underline;
+}
+
+/* ==================== CÓDIGO R ==================== */
+pre, code {
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 0.85em;
+  border-radius: 8px;
+}
+
+pre {
+  background-color: #1e2a36;
+  color: #e0e0e0;
+  padding: 1rem;
+  border-left: 4px solid #3498db;
+  overflow-x: auto;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+code {
+  background-color: #f0f2f5;
+  color: #c7254e;
+  padding: 0.2rem 0.4rem;
+}
+
+pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* ==================== GRÁFICOS E FIGURAS ==================== */
+img, .plot, .figure {
+  max-width: 100%;
+  margin: 1.5rem auto;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  display: block;
+  background: white;
+  padding: 0.5rem;
+}
+
+.caption {
+  text-align: center;
+  font-size: 0.85em;
+  color: #6c757d;
+  margin-top: -1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ==================== TABELAS ==================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background-color: #2c5a7a;
+  color: white;
+  padding: 12px 10px;
+  font-weight: 600;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* ==================== CITAÇÕES E BLOCOS ==================== */
+blockquote {
+  border-left: 4px solid #3498db;
+  background-color: #eef2f7;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #2c3e50;
+  border-radius: 0 12px 12px 0;
+}
+
+/* ==================== CARDS PARA INSIGHTS ==================== */
+.insight-card {
+  background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+  border-left: 5px solid #e67e22;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.insight-card strong {
+  color: #e67e22;
+  font-size: 1.1em;
+}
+
+/* ==================== NOTAS DE ALERTA ==================== */
+.alert {
+  background-color: #fff3cd;
+  border-left: 5px solid #ffc107;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-left-color: #28a745;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-left-color: #17a2b8;
+}
+
+/* ==================== FOOTER / RODAPÉ ==================== */
+.footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e9ecef;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* ==================== BOTÕES E LINKS ==================== */
+a {
+  color: #3498db;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #e67e22;
+  text-decoration: underline;
+}
+
+/* ==================== RESPONSIVIDADE ==================== */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+  
+  h1 { font-size: 1.8em; }
+  h2 { font-size: 1.5em; }
+  h3 { font-size: 1.3em; }
+  
+  pre {
+    font-size: 0.75em;
+    padding: 0.75rem;
+  }
+}
+
+/* ==================== BARRA LATERAL FLUTUANTE ==================== */
+.toc-float {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+}
+
+/* ==================== DESTAQUE PARA RESULTADOS ==================== */
+.highlight {
+  background: linear-gradient(120deg, #f9f3e6 0%, #fff9ef 100%);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #c0392b;
+}
+
+.stat-number {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #2c5a7a;
+  background: #eef2f7;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  display: inline-block;
+  margin: 0 0.2rem;
+}
+
+</style>
+
+
+# 1 INTRODUÇÃO
+
+A dengue é uma arbovirose de grande relevância para saúde pública no Brasil, com ocorrência endêmica e surtos epidêmicos recorrentes ao longo dos anos. De acordo com o Ministério da Saúde ¹, a dengue é uma doença febril aguda, sistêmica, dinâmica, debilitante e autolimitada. A maioria dos doentes se recupera, porém, parte deles podem progredir para formas graves, inclusive virem a óbito. A quase totalidade dos óbitos por dengue é evitável e depende, na maioria das vezes, da qualidade da assistência prestada e organização da rede de serviços de saúde. No município de Alagoinhas/BA, a doença representa um importante desafio para o sistema de saúde, impactando diretamente a morbidade da população e a organização dos serviços assistenciais. Ao analisarmos o número de casos na curva de crescimento ascendente do primeiro mês de 2026, surgiu a necessidade de verificarmos o padrão histórico da arbovirose nos últimos 10 anos. Nesse contexto, a análise exploratória de dados referentes aos casos de dengue ao longo das semanas epidemiológicas entre 2015 e 2025 permite identificar padrões temporais, tendências, sazonalidades e possíveis períodos de maior risco, contribuindo para o planejamento de ações de vigilância, prevenção e controle da doença no município.
+
+# 2 METODOLOGIA E OBJETIVO
+
+Trata-se de um estudo descritivo, de abordagem quantitativa, fundamentado em dados de casos notificados de dengue no município de Alagoinhas(BA), referentes ao período de 2015 a 2025. As informações foram obtidas a partir da plataforma InfoDengue², sendo posteriormente organizadas, tratadas e analisadas por meio da linguagem de programação R. Foram elaborados gráficos e aplicadas estatísticas descritivas com o objetivo de identificar padrões temporais, tendências e possíveis sazonalidades ao longo das semanas epidemiológicas, fundamentos essenciais no processo de análise exploratória de dados. Os procedimentos analíticos foram documentados integralmente por meio da disponibilização do código-fonte em R, organizado de forma sequencial, contemplando as etapas de importação, limpeza, análise exploratória e visualização dos dados, assegurando a reprodutibilidade do estudo
+
+## 2.1 DICIONÁRIO DE DADOS
+
+https://info.dengue.mat.br/informacoes/
+
+- data_ini_SE : Primeiro dia da semana epidemiológica (Domingo)
+- SE: Semana epidemiológica
+- casos_est : Número estimado de casos por semana usando o modelo de nowcasting (nota: Os valores são atualizados retrospectivamente a cada semana)
+- cases_est_min and cases_est_max: Intervalo de credibilidade de 95% do número estimado de casos
+- casos: Número de casos notificados por semana (Os valores são atualizados retrospectivamente todas as semanas)
+- p_rt1: Probabilidade de (Rt> 1). Para emitir o alerta laranja, usamos o critério p_rt1> 0,95 por 3 semanas ou mais.
+- p_inc100k: Taxa de incidência estimada por 100.000
+- Localidade_id: Divisão submunicipal (atualmente implementada apenas no Rio de Janeiro)
+- nivel: Nível de alerta (1 = verde, 2 = amarelo, 3 = laranja, 4 = vermelho)
+- id: Índice numérico
+versao_modelo: Versão do modelo (uso interno)
+_ Rt: Estimativa pontual do número reprodutivo de casos
+_ pop: População estimada (IBGE)
+- tempmin: Média das temperaturas mínimas diárias ao longo da semana
+- tempmed: Média das temperaturas diárias ao longo da semana
+- tempmax: Média das temperaturas máximas diárias ao longo da semana
+- umidmin: Média da umidade relativa mínima diária do ar ao longo da semana
+- umidmed: Média da umidade relativa diária do ar ao longo da semana
+- umidmax: Média da umidade relativa máxima diária do ar ao longo da semana
+- receptivo: Indica receptividade climática, ou seja, condições para alta capacidade vetorial. 0 = desfavorável, 1 = favorável, 2 = favorável nesta semana e na semana passada, 3 = favorável por pelo menos três semanas (suficiente para completar um ciclo de transmissão)
+- transmissao: Evidência de transmissão sustentada: 0 = nenhuma evidência, 1 = possível, 2 = provável, 3 = altamente provável
+- nivel_inc: Incidência estimada abaixo do limiar pré-epidemia, 1 = acima do limiar pré-epidemia, mas abaixo do limiar epidêmico, 2 = acima do limiar epidêmico
+notif_accum_year: Número acumulado de casos no ano
+
+# 3 ANÁLISE EXPLORATÓRIA DE DADOS
+
+Nesta seção são apresentados os procedimentos de análise exploratória dos dados de dengue no município de Alagoinhas, utilizando a linguagem R. Os códigos são descritos passo a passo, acompanhados de comentários e visualizações gráficas, com o objetivo de demonstrar o processo de organização, tratamento e análise dos dados, bem como a interpretação dos principais padrões observados ao longo do período estudado.
+
+## 3.1 IMPORTAÇÃO DE DADOS E BIBLIOTECAS
+
+A primeira etapa da análise exploratória consistiu na importação dos dados previamente obtidos na plataforma InfoDengue, abrangendo as semanas epidemiológicas de 2015 a 2025 para o município de Alagoinhas (BA). No ambiente do RStudio, a importação foi realizada por meio da função _read_csv()_ do pacote readr, que permite a leitura eficiente de arquivos no formato CSV. Optou-se por essa abordagem por sua reprodutibilidade e integração com o fluxo de trabalho baseado em scripts.
+
+Para a condução de todas as etapas da análise, foram carregados os seguintes pacotes da linguagem R:
+
+readr: leitura do arquivo de dados no formato CSV, garantindo eficiência e velocidade na importação.
+
+ggplot2: construção de todas as visualizações gráficas apresentadas no trabalho, incluindo histogramas, boxplots, gráficos de violino, dispersão com curvas de suavização, densidade bidimensional, séries temporais e matrizes de correlação.
+
+e1071: suporte à análise da distribuição dos dados por meio do cálculo de medidas de forma, como assimetria (skewness) e curtose (kurtosis), fundamentais para caracterizar o comportamento das variáveis estudadas.
+
+dplyr: manipulação e transformação dos dados, incluindo filtragem, seleção de variáveis, criação de novas colunas (como mês e ano) e agregações para cálculos de amplitude anual e estatísticas descritivas.
+
+ggcorrplot: visualização aprimorada das matrizes de correlação, com escalas de cores intuitivas para identificação rápida da força e direção das associações entre variáveis.
+
+tidyverse: coleção de pacotes (incluindo ggplot2, dplyr, tidyr, entre outros) que proporciona um ambiente coeso e integrado para ciência de dados.
+
+tsibble: estrutura moderna para dados de séries temporais, permitindo a criação de objetos indexados por data e facilitando a manipulação em análises temporais.
+
+feasts: ferramentas para decomposição de séries temporais (STL), extração de componentes (tendência, sazonalidade e resíduo) e cálculo de features como força da tendência, força da sazonalidade e autocorrelação dos resíduos.
+
+A combinação desses pacotes permitiu a realização de um fluxo de trabalho completo e integrado, desde a importação e limpeza dos dados até análises avançadas como correlações, testes de significância, decomposição de séries temporais e modelagem estatística.
+
+
+
+### 3.1.1 Pacotes do R
+
+Antes de iniciar as análises, é necessário carregar os pacotes que serão utilizados ao longo do trabalho. Esses pacotes fornecem as funções necessárias para a importação de dados, manipulação de variáveis, análise estatística e visualização gráfica. Pressupõe-se, no código abaixo, que os pacotes já estão instalados no ambiente R.
+
+```{r,  message=FALSE, warning=FALSE}
+# carregando bibliotecas
+
+library(readr)
+library(ggplot2)
+library(e1071)
+library(dplyr)
+library(ggcorrplot)
+library(tidyverse)
+library(tsibble)
+library(feasts)
+
+```
+
+### 3.1.2 Inspeção inicial dos dados
+
+Nesta etapa inicial da análise, realizamos a importação do conjunto de dados contendo informações sobre os casos de dengue no município de Alagoinhas (BA) no período de 2015 a 2025. Após o carregamento do arquivo, utilizamos uma função _head_ de visualização inicial para observar as primeiras linhas do banco de dados. Essa etapa é importante para verificar se os dados foram importados corretamente e para compreender a estrutura das variáveis presentes no conjunto de dados. Para reprodutibildade do estudo, é necessário que a base de dados tenha no código o caminho exato do local onde está armazenada.
+
+```{r}
+# importando base de dados e primeiras linhas
+
+dengue_alagoinhas_2015_2025 <- read_csv("C:/Users/estad/OneDrive/EDA Dengue Alag(BA) 2015-2025/dengue_alagoinhas_2015_2025.csv")
+head(dengue_alagoinhas_2015_2025)
+
+```
+
+Este conjunto de dados contém 575 registros e 30 variáveis relacionadas à modelagem epidemiológica de doenças. As informações incluem datas de semanas epidemiológicas, estimativas de casos (com valores mínimos e máximos), indicadores de transmissão (como Rt) e incidência, além de flags lógicas sobre a confirmação e provisão dos dados.
+
+### 3.1.3 Verificação da estrutura dos dados e valores Ausentes
+
+Após a importação do conjunto de dados, é importante examinarmos a estrutura das variáveis presentes na base. Essa etapa é fundamental para garantir a qualidade dos dados e identificar possíveis problemas que possam afetar as análises estatísticas posteriores. Para isso, utilizamos uma função _str_ que permite visualizar os tipos de dados de cada variável, como números inteiros, numéricos ou datas. Em seguida, realizamos uma verificação da presença de valores ausentes (NA) com _any_ tanto na base de dados como em variáveis específicas utilizadas na análise, como casos de dengue e variáveis climáticas.
+
+
+```{r }
+
+#visualizando tipos de dados
+
+str(dengue_alagoinhas_2015_2025)
+
+
+# valores nulos na base de dados
+
+any(is.na(dengue_alagoinhas_2015_2025))
+
+# valores nulos nas variáveis da análise
+
+any(is.na(dengue_alagoinhas_2015_2025$casos))
+any(is.na(dengue_alagoinhas_2015_2025$tempmed))
+any(is.na(dengue_alagoinhas_2015_2025$tempmax))
+any(is.na(dengue_alagoinhas_2015_2025$tempmin))
+any(is.na(dengue_alagoinhas_2015_2025$Rt))
+any(is.na(dengue_alagoinhas_2015_2025$umidmax))
+any(is.na(dengue_alagoinhas_2015_2025$umidmin))
+any(is.na(dengue_alagoinhas_2015_2025$umidmed))
+
+# visualizando linhas nulas
+
+which(is.na(dengue_alagoinhas_2015_2025$tempmed))
+which(is.na(dengue_alagoinhas_2015_2025$tempmax))
+which(is.na(dengue_alagoinhas_2015_2025$tempmin))
+which(is.na(dengue_alagoinhas_2015_2025$umidmax))
+which(is.na(dengue_alagoinhas_2015_2025$umidmed))
+
+```
+
+Os resultados indicaram ausência de valores nulos na variável casos, bem como na variável Rt, indicando que os registros epidemiológicos estavam completos para essas variáveis. 
+
+Por outro lado, foram identificados valores ausentes nas variáveis meteorológicas de temperatura média (tempmed), temperatura máxima (tempmax) e temperatura mínima (tempmin), bem como para umidade máxima e umidade média. A identificação dos índices das observações com dados faltantes revelou que 20 registros apresentavam ausência simultânea dessas variáveis, correspondendo às mesmas posições no conjunto de dados. 
+
+Isso sugere que as lacunas estão associadas a falhas ou indisponibilidade de registros meteorológicos em determinados períodos, afetando simultaneamente as três medidas de temperatura e duas de umidade.
+
+Na literatura existem diversas formas de tratar os valores ausentes. _De acordo com  Castro e Ferrari (2016) e Faceli et al. (2023), são diversas alternativas que podem ser adotadas: excluir objetos com muitos dados ausentes; preencher valores manualmente (impraticável em bases de dados muito extensas); utilizar heurísticas para o preenchimento, por exemplo, utilizando a média à ausência ou a moda; preencher o valor ausente com o valor do mesmo atributo (característica) de um objeto similar utilizando medidas de similaradidade e distância; empregar um indutor para estimar o valor do atributo etc._
+
+
+Considerando que esses valores faltantes representam uma pequena proporção do total de observações (20 para 575), optou-se por manter os registros como valores ausentes (NA), sem realizar procedimentos de imputação, tanto pela proporção, quanto pela necessidade de mantermos as análises mais precisas e evitarmos excesso de virtualidade. Nas análises estatísticas subsequentes e na geração de gráficos, as observações com dados incompletos foram automaticamente desconsideradas pelos métodos utilizados. 
+
+As variáveis para casos estimados, incluíndo mínimos e máximos, não apresentam valores na base de dados.
+
+## 3.2 TRATAMENTO DE DADOS
+
+Antes de iniciar as análises gráficas, foi realizada uma etapa de preparação e organização do conjunto de dados. Esta seção detalha os procedimentos aplicados para garantir a consistência e a qualidade das informações utilizadas ao longo do estudo.
+
+### 3.2.1 Conversão e padronização de tipos de dados
+
+Após a etapa inicial de inspeção e verificação da qualidade da base de dados, é necessário realizarmos procedimentos de tratamento e padronização das variáveis que serão utilizadas na análise. O tratamento de dados é uma etapa fundamental em qualquer processo de análise exploratória, pois permite garantir maior consistência, legibilidade e comparabilidade entre as variáveis do conjunto de dados.
+
+No presente estudo, optou-se por realizar o arredondamento com _round_ de algumas variáveis numéricas, especialmente aquelas relacionadas às condições climáticas e ao indicador epidemiológico Rt. Essas variáveis originalmente apresentam valores com várias casas decimais, o que pode gerar um nível de precisão que, na prática, não acrescenta ganhos interpretativos significativos para as análises estatísticas realizadas neste trabalho.
+
+As variáveis de temperatura foram arredondadas para uma casa decimal. Essa decisão se justifica pelo fato de que, em análises climáticas e epidemiológicas, pequenas variações em múltiplas casas decimais tendem a representar apenas ruídos de medição ou precisão instrumental, não necessariamente diferenças relevantes do ponto de vista analítico. Dessa forma, o arredondamento contribui para uma representação mais clara e padronizada dessas variáveis.
+
+De forma semelhante, as variáveis relacionadas à umidade (média, máxima e mínima) também foram arredondadas para uma casa decimal. Esse procedimento facilita a interpretação dos valores e contribui para tornar as distribuições dessas variáveis mais estáveis em análises estatísticas e visualizações gráficas, como histogramas, gráficos de densidade e análises de correlação, como veremos adiante.
+
+Além das variáveis climáticas, também foi realizado o arredondamento do indicador Rt, que representa o _número reprodutivo efetivo da doença_. Esse indicador é amplamente utilizado em epidemiologia para avaliar o potencial de transmissão de uma doença ao longo do tempo. Assim como nas demais variáveis contínuas, o arredondamento para uma casa decimal permite simplificar a leitura e a interpretação dos valores, sem comprometer o significado epidemiológico do indicador.
+
+Portanto, o procedimento de arredondamento adotado neste trabalho busca equilibrar dois aspectos fundamentais da análise de dados: a _manutenção da informação essencial contida nos dados_ e a _simplificação da representação numérica_, tornando o conjunto de dados mais adequado para as etapas subsequentes de análise exploratória, modelagem e visualização.
+
+Criamos novas colunas respectivas ao procedimento utilizando. Dessa maneira, conseguimos manter os dados originais e arredondados conjuntamente, podendo adpatar e utilizar sob diferentes abordagens.
+
+```{r}
+# convertendo tipos de dados (novas colunas)
+
+# temperatura -> arredondando
+
+dengue_alagoinhas_2015_2025$tempmed_round <- round(
+  dengue_alagoinhas_2015_2025$tempmed, 1
+)
+
+dengue_alagoinhas_2015_2025$tempmax_round <- round(
+  dengue_alagoinhas_2015_2025$tempmax, 1
+)
+
+dengue_alagoinhas_2015_2025$tempmin_round <- round(
+  dengue_alagoinhas_2015_2025$tempmin, 1
+)
+
+# úmidade -> arredondando
+
+dengue_alagoinhas_2015_2025$umidmed_round <- round(
+  dengue_alagoinhas_2015_2025$umidmed, 1
+)
+dengue_alagoinhas_2015_2025$umidmax_round <- round(
+  dengue_alagoinhas_2015_2025$umidmax, 1
+)
+dengue_alagoinhas_2015_2025$umidmin_round <- round(
+  dengue_alagoinhas_2015_2025$umidmin, 1
+)
+
+# rt -> arredondando
+
+dengue_alagoinhas_2015_2025$Rt_round <- round(
+  dengue_alagoinhas_2015_2025$Rt, 1
+)
+
+
+```
+
+Também foi extraído informações temporais da variável de data. Foram criadas três novas variáveis: mes (com o número do mês), ano (com o ano) e mes_nome (com a abreviatura do mês). Essa preparação dos dados será útil para análises posteriores que envolvam padrões sazonais, comparações anuais ou séries temporais.
+
+
+```{r}
+
+# extrair mês e ano da data
+
+dengue_alagoinhas_2015_2025$mes <- format(dengue_alagoinhas_2015_2025$data_iniSE, "%m")
+dengue_alagoinhas_2015_2025$ano <- format(dengue_alagoinhas_2015_2025$data_iniSE, "%Y")
+dengue_alagoinhas_2015_2025$mes_nome <- format(dengue_alagoinhas_2015_2025$data_iniSE, "%b")
+```
+
+### 3.2.2 Medidas estatísticas descritivas
+
+Após a etapa de tratamento e padronização das variáveis, iniciamos a análise das medidas estatísticas descritivas do conjunto de dados. Essas medidas são fundamentais na análise exploratória, pois permitem compreender o comportamento geral das variáveis, identificar padrões e obter uma visão inicial sobre a distribuição dos dados.
+
+Foram calculadas algumas das principais medidas descritivas para as variáveis selecionadas, incluindo **média, mediana, valores mínimo e máximo, e desvio padrão**. Cada uma dessas medidas fornece informações importantes sobre as características da distribuição dos dados.
+
+A **média** representa o valor médio observado na série de dados, fornecendo uma noção geral da magnitude da variável ao longo do período analisado. Já a **mediana** corresponde ao valor central da distribuição, sendo particularmente útil quando os dados apresentam assimetria ou valores extremos.
+
+Os valores **mínimo e máximo** permitem identificar os limites inferior e superior observados na série, evidenciando a amplitude dos dados. Por sua vez, o **desvio padrão** mede o grau de dispersão dos valores em relação à média, indicando o quanto os dados variam ao longo do tempo.
+
+As medidas foram calculadas para diferentes variáveis relevantes para a análise epidemiológica e climática do estudo. Entre elas estão o número de casos de dengue, as variáveis de temperatura (máxima, mínima e média) e o indicador epidemiológico Rt, que representa o número reprodutivo efetivo da doença ao longo do período analisado.
+
+A obtenção dessas estatísticas descritivas permite estabelecer uma compreensão inicial do comportamento das variáveis e fornece subsídios para etapas posteriores da análise, como a avaliação da distribuição dos dados, análise de correlação entre variáveis e construção de visualizações gráficas.
+
+```{r}
+# medidas estatísticas descritivas 
+
+# medidas de casos
+
+media_casos <- mean(dengue_alagoinhas_2015_2025$casos)
+mediana_casos <- median(dengue_alagoinhas_2015_2025$casos)
+min_casos <- min(dengue_alagoinhas_2015_2025$casos)
+max_casos <- max(dengue_alagoinhas_2015_2025$casos)
+sd_casos <- sd(dengue_alagoinhas_2015_2025$casos)
+
+# medidas de temperatura máxima 
+
+media_tempmax <- mean(dengue_alagoinhas_2015_2025$tempmax_round)
+median_tempmax <- median(dengue_alagoinhas_2015_2025$tempmax_round)
+min_tempmax <- min(dengue_alagoinhas_2015_2025$tempmax_round)
+max_tempmax <- max(dengue_alagoinhas_2015_2025$tempmax_round)
+sd_tempmax <- sd(dengue_alagoinhas_2015_2025$tempmax_round)
+
+# medidas de temperatura mínima 
+
+media_tempmin <- mean(dengue_alagoinhas_2015_2025$tempmin_round)
+median_tempmin <- median(dengue_alagoinhas_2015_2025$tempmin_round)
+min_tempmin <- min(dengue_alagoinhas_2015_2025$tempmin_round)
+max_tempmin <- max(dengue_alagoinhas_2015_2025$tempmin_round)
+sd_tempmin <- sd(dengue_alagoinhas_2015_2025$tempmin_round)
+
+# medidas de temperatura média 
+
+media_tempmed <- mean(dengue_alagoinhas_2015_2025$tempmed_round)
+median_tempmed  <- median(dengue_alagoinhas_2015_2025$tempmed_round)
+min_tempmed  <- min(dengue_alagoinhas_2015_2025$tempmed_round)
+max_tempmed  <- max(dengue_alagoinhas_2015_2025$tempmed_round)
+sd_tempmed  <- sd(dengue_alagoinhas_2015_2025$tempmed_round)
+
+# medidas de rt 
+
+media_rt <- mean(dengue_alagoinhas_2015_2025$Rt_round)
+median_rt <- median(dengue_alagoinhas_2015_2025$Rt_round)
+min_rt <- min(dengue_alagoinhas_2015_2025$Rt_round)
+max_rt <- max(dengue_alagoinhas_2015_2025$Rt_round)
+sd_rt <- sd(dengue_alagoinhas_2015_2025$Rt_round)
+```
+
+### 3.2.3 Conjunto de medidas estatísticas e tratamento de outliers
+
+Após o cálculo das medidas estatísticas individuais para cada variável, foi construído um conjunto estruturado de estatísticas descritivas, organizado em forma de tabela. A criação desse dataset tem como objetivo reunir, em um único objeto, as principais medidas de tendência central e dispersão das variáveis analisadas. Essa organização facilita tanto a interpretação dos resultados quanto a exportação dos dados para relatórios, tabelas ou análises posteriores, e possui algumas vantagens metodológicas importantes. Em primeiro lugar, permite _sintetizar o comportamento estatístico das variáveis em uma única estrutura tabular,_ facilitando comparações entre diferentes variáveis do estudo. Em segundo lugar, essa organização torna possível _exportar os resultados para arquivos externos,_ o que é particularmente útil na elaboração de relatórios ou na documentação do processo analítico.
+
+Após a criação do dataset, os resultados foram exportados para um arquivo no formato CSV, permitindo sua utilização em outras ferramentas de análise ou visualização de dados. Esse procedimento também contribui para a **reprodutibilidade da análise**, uma vez que os resultados podem ser facilmente compartilhados ou revisados posteriormente.
+
+
+```{r}
+# criando dataset das medidas
+
+medidas <- data.frame(
+  variavel = c("Casos", "Temp. Máxima", "Temp. Mínima", "Temp. Média", 
+               "Rt", "Umid.Med", "Umid.Max", "Umid.Min"),
+  media    = c(
+    mean(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$tempmax_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$tempmin_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$tempmed_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$Rt_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$umidmed_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$umidmax_round, na.rm = TRUE),
+    mean(dengue_alagoinhas_2015_2025$umidmin_round, na.rm = TRUE)
+  ),
+  mediana  = c(
+    median(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$tempmax_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$tempmin_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$tempmed_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$Rt_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$umidmed_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$umidmax_round, na.rm = TRUE),
+    median(dengue_alagoinhas_2015_2025$umidmin_round, na.rm = TRUE)
+  ),
+  minimo   = c(
+    min(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$tempmax_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$tempmin_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$tempmed_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$Rt_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$umidmed_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$umidmax_round, na.rm = TRUE),
+    min(dengue_alagoinhas_2015_2025$umidmin_round, na.rm = TRUE)
+  ),
+  maximo   = c(
+    max(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$tempmax_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$tempmin_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$tempmed_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$Rt_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$umidmed_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$umidmax_round, na.rm = TRUE),
+    max(dengue_alagoinhas_2015_2025$umidmin_round, na.rm = TRUE)
+  ),
+  desvio_padrao = c(
+    sd(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$tempmax_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$tempmin_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$tempmed_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$Rt_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$umidmed_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$umidmax_round, na.rm = TRUE),
+    sd(dengue_alagoinhas_2015_2025$umidmin_round, na.rm = TRUE)
+  )
+)
+
+# visualizando e salvando dataset
+
+View(medidas)
+write_csv(medidas, "medidas_dengue_alagoinhas.csv")
+
+head(medidas)
+
+```
+
+
+**COMPLEMENTO**
+
+Durante o processo de análise exploratória univariada, foi identificado um valor atípico (outlier) na variável umidade máxima (umidmax_round). Esse valor ocorreu na _linha 284_ da base de dados e apresentou o valor _173.2,_ o que ultrapassa significativamente o limite físico esperado para a umidade relativa do ar.
+
+Do ponto de vista meteorológico, a umidade relativa do ar é expressa em porcentagem e possui limite máximo de 100%, representando a saturação do ar em relação ao vapor de água. Dessa forma, valores superiores a 100% indicam, com alta probabilidade, erros de medição, inconsistências no processo de coleta de dados ou problemas de registro na base de dados.
+
+Diante dessa inconsistência, optou-se por tratar esse valor como um dado inválido, substituindo-o por um valor ausente (NA) no arredondamento e mantendo na forma original da base de dados, visando evitar que esse valor distorça as estatísticas descritivas ou influencie indevidamente análises posteriores, como cálculos de correlação, análise de distribuição ou modelagem estatística.
+
+A substituição por _NA_ (valor ausente) é uma estratégia comum em análise de dados, pois permite que funções estatísticas tratem automaticamente esses casos quando o argumento _na.rm = TRUE_ é utilizado. Dessa forma, o dado inconsistente é excluído dos cálculos sem comprometer a integridade do restante do conjunto de dados, pela proporção do valor em relaçao ao todo (1 para 575).
+
+
+
+```{r}
+# atualizando = umidmax(umidmax_round), outlier linha 284 -> 173.2 -> NA
+
+dengue_alagoinhas_2015_2025$umidmax_round[
+  dengue_alagoinhas_2015_2025$umidmax_round > 100
+] <- NA
+
+
+```
+
+# 4 ANÁLISE EXPLORATÓRIA UNIVARIADA
+
+
+A análise exploratória univariada consiste no estudo individual de cada variável presente no conjunto de dados. O objetivo dessa etapa é compreender o comportamento de cada variável separadamente, identificando características importantes como tendência central, dispersão, forma da distribuição e possíveis valores atípicos (outliers).
+
+Por meio dessa análise, torna-se possível observar padrões iniciais nos dados, avaliar a presença de assimetria nas distribuições e identificar inconsistências que possam influenciar os resultados das análises posteriores. Além disso, a análise univariada permite compreender melhor a natureza das variáveis estudadas, contribuindo para a escolha adequada de métodos estatísticos e técnicas de visualização.
+
+Nesta etapa do estudo, serão exploradas as distribuições das principais variáveis do conjunto de dados, incluindo o número de casos de dengue, variáveis climáticas de temperatura e umidade, bem como o indicador epidemiológico Rt e nível de alerta. Para isso, serão utilizadas as estatísticas descritivas e representações gráficas, como histogramas, curvas de densidade e boxplots, que auxiliam na visualização da distribuição e variabilidade dos dados.
+
+
+## 4.1 DISTRIBUIÇÃO DOS DADOS
+
+
+Uma etapa importante da análise exploratória consiste em examinar a _distribuição estatística das variáveis_ presentes no conjunto de dados. A compreensão da forma da distribuição permite identificar padrões estruturais nos dados, avaliar a presença de assimetria e observar o grau de concentração ou dispersão dos valores em torno da média e mediana.
+
+Entre as medidas utilizadas para descrever a forma de uma distribuição destacam-se a _assimetria (skewness)_ e a _curtose (kurtosis)._ 
+Essas medidas fornecem informações importantes sobre a estrutura da distribuição e ajudam a identificar possíveis desvios em relação a uma distribuição normal, também chamada de _distribuição gaussiana_
+
+A assimetria (skewness) mede o grau de inclinação da distribuição. Quando o valor da assimetria é próximo de zero, a distribuição tende a ser aproximadamente simétrica, isto é, uma _distribuição normal._ Valores positivos indicam que a distribuição apresenta uma cauda mais longa à direita, enquanto valores negativos indicam uma cauda mais longa à esquerda. A presença de assimetria pode sugerir concentração de valores em determinadas faixas da variável ou a ocorrência de valores extremos.
+
+Já a curtose (kurtosis) descreve o grau de concentração dos dados em torno da média e o peso das caudas da distribuição. Valores de curtose próximos ao padrão da distribuição normal indicam uma distribuição mesocúrtica, enquanto valores mais elevados podem indicar distribuições com caudas mais pesadas e maior concentração de valores extremos. Por outro lado, valores menores podem indicar distribuições mais achatadas.
+
+Para avaliar essas características, foram selecionadas variáveis relevantes do conjunto de dados, incluindo o número de casos de dengue, variáveis climáticas relacionadas à temperatura (máxima, mínima e média), variáveis de umidade relativa do ar, e o indicador epidemiológico Rt.
+
+As medidas de assimetria e curtose foram calculadas para cada uma dessas variáveis utilizando funções estatísticas apropriadas. Para automatizar o processo, foi criado um vetor contendo os nomes das variáveis de interesse e, em seguida, foi aplicada uma _função_ que calcula as estatísticas para cada variável da base de dados.
+
+Os resultados foram organizados em um novo conjunto de dados denominado _resumo_dist,_ no qual cada linha representa uma variável analisada e as colunas apresentam os valores de assimetria e curtose correspondentes. Essa estrutura permite visualizar de forma comparativa o comportamento estatístico das variáveis do estudo.
+
+Por fim, os resultados obtidos foram exportados para um arquivo no formato CSV, permitindo que essas estatísticas possam ser facilmente consultadas, documentadas ou utilizadas em análises posteriores. 
+
+
+```{r}
+
+# verificando a distribuição dos dados
+
+# assimetria e curtose
+
+dist_variaveis <- c(
+  "casos",
+  "tempmax_round",
+  "tempmin_round",
+  "tempmed_round",
+  "Rt_round",
+  "umidmin_round",
+  "umidmax_round",
+  "umidmed_round"
+)
+
+resumo_dist <- data.frame(
+  Variavel = dist_variaveis,
+  Skewness = sapply(dist_variaveis, function(x) 
+    skewness(as.numeric(dengue_alagoinhas_2015_2025[[x]]), na.rm = TRUE)
+  ),
+  Kurtosis = sapply(dist_variaveis, function(x) 
+    kurtosis(as.numeric(dengue_alagoinhas_2015_2025[[x]]), na.rm = TRUE)
+  )
+)
+
+View(resumo_dist)
+write_csv(resumo_dist, "resumo_assimetria_curtose.csv")
+
+head(resumo_dist)
+    
+```
+
+## 4.2 HISTOGRAMA E BOXPLOT DOS DADOS
+
+### 4.2.1 Histograma simples do número de casos
+
+Essa seção apresenta a distribuição do número de casos de dengue no município de Alagoinhas ao longo das semanas epidemiológicas entre 2015 e 2025. O histograma simples foi construído com intervalos de classe (bins) de amplitude 5, permitindo visualizar a frequência absoluta de ocorrência dos casos.
+
+Observa-se que a grande maioria das semanas apresenta um número reduzido de casos, concentrando-se nas primeiras classes do histograma. Esse padrão é típico de doenças endêmicas, nas quais a maior parte do tempo a incidência se mantém em níveis baixos, intercalada por picos epidêmicos ocasionais. A assimetria à direita é evidente, com uma cauda longa se estendendo até valores mais elevados, indicando a ocorrência de semanas com número excepcionalmente alto de notificações.
+
+Os valores calculados de assimetria (2,9) e curtose (8,7) confirmam visualmente essa percepção: _a assimetria positiva elevada indica uma forte concentração de observações à esquerda, enquanto a curtose alta sugere uma distribuição com caudas pesadas, ou seja, com maior propensão a valores extremos em comparação com uma distribuição normal._
+
+```{r}
+
+# histograma de casos
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = casos)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+  labs(title = "Distribuição de casos de dengue", 
+       x = "Número de casos", 
+       y = "Frequência",
+       caption = "Assimetria 2.9 / Curtose 8.7") +
+  theme_light()
+```
+
+### 4.2.2 Histograma com curva de densidade do número de casos
+
+Para aprofundar a análise da distribuição do número de casos de dengue, foi construído um histograma combinado com uma curva de densidade, também conhecida como _polígono de frequência suavizado._ Esse tipo de visualização permite observar não apenas a frequência dos valores em determinados intervalos, mas também a forma geral da distribuição dos dados de maneira mais contínua e interpretável.
+
+Neste gráfico, o histograma representa a distribuição empírica dos casos de dengue ao longo do período analisado. Cada barra corresponde a um intervalo de valores (bins), definido neste caso com largura de 10 unidades, indicando quantas observações se concentram em cada faixa de número de casos.
+
+Sobre o histograma foi adicionada uma curva de densidade, representada pela linha vermelha. Essa curva corresponde a uma estimativa suavizada da distribuição dos dados e permite visualizar com maior clareza o formato da distribuição, evidenciando regiões de maior concentração de observações.
+
+Além disso, foram incluídas duas linhas verticais que representam medidas importantes de tendência central da variável:
+
+- A _linha azul tracejada_ indica a média aritmética da distribuição;
+- A _linha verde pontilhada_ indica a mediana da distribuição.
+
+A inclusão dessas linhas permite comparar visualmente a posição relativa da média e da mediana, o que auxilia na identificação do tipo de assimetria presente na distribuição.
+
+
+```{r, warning=FALSE}
+
+# histograma de casos + curva de densidade (polígono de frequência)
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = casos)) +
+  geom_histogram(aes(y = ..density..), binwidth = 10, fill = "#E0FFFF", color = "#CDC9C9") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(casos, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(casos, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(title = "Distribuição de casos de dengue (assimétrica à direita)",
+       x = "Número de casos",
+       y = "Densidade",
+       caption = "Assimetria 2.9 / Curtose 8.7") +
+  annotate("text", x = mean(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE)+5, 
+           y = 0.02, label = "Média mu = 9.8", color = "blue") +
+  annotate("text", x = median(dengue_alagoinhas_2015_2025$casos, na.rm = TRUE)-5, 
+           y = 0.02, label = "Mediana Md = 3.0", color = "#008B45") +
+  theme_light()
+
+```
+
+### 4.2.3 Boxplot de casos
+
+Outra forma importante de compreender o comportamento dos dados é por meio do boxplot (diagrama de caixa). Esse tipo de gráfico é amplamente utilizado na análise exploratória de dados porque permite visualizar de forma rápida a _distribuição, a dispersão e a presença de valores extremos (outliers)_ em uma variável.
+
+O boxplot apresentado resume a distribuição do número de casos de dengue ao longo do período analisado. A estrutura do gráfico é composta por alguns elementos fundamentais:
+
+- _Linha central da caixa:_ representa a mediana da distribuição, ou seja, o valor que divide os dados ao meio.
+- _Limite inferior da caixa (Q1):_ corresponde ao primeiro quartil, abaixo do qual estão 25% das observações.
+- _Limite superior da caixa (Q3):_ corresponde ao terceiro quartil, abaixo do qual estão 75% das observações.
+- _Altura da caixa (IQR – Intervalo Interquartil):_ representa a faixa onde se concentram os 50% centrais dos dados.
+- _Bigodes (whiskers):_ indicam a extensão dos valores que ainda são considerados dentro do padrão esperado da distribuição.
+- _Pontos individuais acima ou abaixo dos bigodes:_ representam outliers, ou seja, valores significativamente distantes da maior parte das observações.
+
+A análise do gráfico mostra que _a maior parte dos valores de casos de dengue se concentra em níveis relativamente baixos,_ com mediana próxima de valores reduzidos. Isso indica que, na maior parte do período analisado, o número de casos registrados foi relativamente pequeno.
+
+Entretanto, observa-se a presença de diversos outliers acima do limite superior do boxplot, indicando semanas ou períodos em que o número de casos aumentou de forma significativa. Esses valores extremos representam _picos de incidência da doença,_ característicos de momentos de maior transmissão ou de surtos epidemiológicos.
+
+É importante destacar que, em dados epidemiológicos, a presença de outliers nem sempre representa erro ou inconsistência nos dados. Pelo contrário, muitas vezes esses valores refletem eventos reais do fenômeno estudado, como períodos de epidemia, sazonalidade climática ou condições ambientais favoráveis à proliferação do vetor da doença.
+
+Portanto, a presença desses valores elevados é consistente com o comportamento esperado de séries temporais relacionadas à dengue, nas quais podem ocorrer períodos de estabilidade seguidos por aumentos abruptos no número de casos.
+
+Assim, o boxplot contribui para evidenciar dois aspectos importantes da variável analisada:
+
+1. A _concentração da maior parte das observações em valores baixos de casos,_ indicando períodos de menor incidência.
+2. A _existência de valores extremos associados a surtos epidemiológicos,_ responsáveis por ampliar a dispersão da distribuição.
+
+
+```{r}
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = casos
+)) + 
+  geom_boxplot() +
+  labs(
+    title = "Boxplot de distribuição de casos",
+    subtitle = "A presença de outiliers é uma caraterística de surtos em dados epidemiológicos."
+  ) +
+  theme_light()
+  
+```
+
+### 4.2.4 Boxplot de casos com violino de densidade
+
+
+Para complementar a análise da distribuição dos casos de dengue, utilizou-se a combinação entre _boxplot e gráfico de violino (violin plot)._ Essa abordagem permite visualizar simultaneamente um resumo estatístico da distribuição e a forma completa da densidade dos dados.
+O gráfico de violino adiciona uma camada de informação ao representar a densidade estimada da distribuição dos dados. A largura da silhueta indica onde os valores se concentram com maior frequência: regiões mais largas indicam maior concentração de observações, enquanto regiões mais estreitas indicam menor frequência.
+
+Ao combinar essas duas visualizações, torna-se possível observar tanto o _resumo estatístico da variável_ quanto o _formato da distribuição,_ permitindo uma compreensão mais completa do comportamento dos casos de dengue ao longo do período analisado.
+
+No gráfico apresentado, a silhueta do violino revela a forma da distribuição, enquanto o boxplot central resume os principais indicadores estatísticos. Essa combinação facilita a identificação de assimetria, concentração de valores e possíveis extremos, características importantes na análise exploratória de dados epidemiológicos.
+
+```{r}
+# boxplot de casos + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = "", y = casos)) +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  geom_boxplot(width = 0.1) +
+  labs(
+    title = "Boxplot de casos com violino de densidade",
+    subtitle = "A silhueta ao redor do boxplot demonstra a concentração de dados"
+  ) +
+  theme_light()
+
+```
+
+### 4.2.5 Histograma de nível
+
+A distribuição da variável nível foi inicialmente explorada por meio de um histograma com curva de densidade, com o objetivo de observar a forma geral da distribuição e identificar possíveis padrões de concentração dos dados. O histograma permite visualizar a frequência relativa dos valores e fornece uma ideia preliminar da assimetria da distribuição.
+
+No entanto, é importante destacar que _a variável nível possui natureza discreta e ordinal,_ assumindo apenas alguns valores inteiros específicos (1-4). Nesses casos, a utilização de histogramas e curvas de densidade pode produzir representações visuais menos precisas, pois essas técnicas são mais adequadas para variáveis contínuas.
+
+Dessa forma, após essa visualização inicial da distribuição, apresenta-se também um gráfico de barras, que é mais apropriado para variáveis discretas ou categóricas. Esse tipo de gráfico permite observar de maneira mais clara a frequência de cada nível, facilitando a interpretação da distribuição dos dados.
+
+Além disso, as medidas de assimetria (skewness) e curtose (kurtosis) foram calculadas para complementar a análise descritiva da variável, fornecendo informações adicionais sobre o formato da distribuição.
+
+```{r}
+
+# histograma de nível
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = nivel
+)) + 
+  geom_histogram(aes (y = ..density..), binwidth = 1, fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  labs(
+    title = "Distribuição de nível",
+    caption = "Assimetria 1.4 / Curtose 0.6"
+  ) +
+  theme_light()
+
+kurtosis(dengue_alagoinhas_2015_2025$nivel)
+skewness(dengue_alagoinhas_2015_2025$nivel)
+```
+
+### 4.2.6 Distribuição de nível por frequência
+
+Nesse gráfico, cada barra representa um nível específico da variável, enquanto a altura da barra indica o número de observações registradas naquele nível. Essa representação facilita a identificação de categorias mais frequentes, possíveis desbalanceamentos na distribuição e padrões gerais presentes nos dados.
+
+A utilização da função factor() no eixo x garante que os valores da variável nível sejam tratados como categorias, permitindo que o _ggplot2_ construa corretamente o gráfico de contagem de frequências. 
+
+```{r, warning=FALSE, message=FALSE}
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = factor(nivel))) +
+  geom_bar(fill = "skyblue") +
+  labs(
+    title = "Distribuição de nível",
+    x = "Nível",
+    y = "Frequência"
+  ) +
+  theme_light()
+```
+
+Vale observar que _a base não contém registros de nível = 3._
+
+Do ponto de vista epidemiológico, o fato de não existir registro com _nível = 3_ na base de dados pode ter um significado importante relacionado ao comportamento da transmissão da dengue ao longo do período analisado.
+De acordo com a fonte dos dados, os níveis de alerta se caracterizam por:
+
+_Nível 1_ – Situação normal ou baixa transmissão
+
+_Nível 2_ – Atenção ou aumento de risco
+
+_Nível 3_ – Alerta epidemiológico
+
+_Nível 4_ – Situação de emergência ou surto
+
+Epidemiologicamente, isso pode indicar transição rápida entre cenários epidemiológicos.
+
+Um exemplo possível é:
+
+_semanas com poucos casos_ → nível 1
+
+_aumento inicial_ → nível 2
+
+_crescimento muito rápido_ → nível 4
+
+Ou seja, o sistema pode ter pulado o nível 3, porque os critérios para emergência foram atingidos rapidamente. Verificamos os valores na base dessa forma: 
+
+```{r}
+# verificando valores da base 
+
+unique(dengue_alagoinhas_2015_2025$nivel)
+
+```
+
+
+### 4.2.7 Histograma da temperatura média
+
+O histograma da temperatura média ao longo da série histórica apresenta uma distribuição relativamente próxima da distribuição normal, com leve assimetria negativa (-0.5). Esse valor indica uma pequena concentração de observações em temperaturas mais altas, enquanto uma cauda mais longa se estende em direção aos valores menores.
+
+A curtose próxima de zero (-0.1) sugere que a distribuição possui formato semelhante ao de uma distribuição normal, sem presença significativa de caudas pesadas ou picos acentuados. Esse comportamento indica uma relativa estabilidade na temperatura média durante o período analisado.
+
+A média e a mediana apresentam valores próximos, o que reforça a ideia de uma distribuição relativamente equilibrada. Do ponto de vista epidemiológico, essa estabilidade térmica é relevante, pois temperaturas médias relativamente constantes podem favorecer condições ambientais propícias para a reprodução do mosquito _Aedes aegypti_, vetor responsável pela transmissão da dengue.
+
+Assim, a análise da distribuição da temperatura média contribui para compreender o contexto climático em que os casos de dengue ocorrem ao longo da série histórica analisada.
+
+```{r, warning=FALSE, message=FALSE}
+
+# histograma de temperatura média
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = tempmed_round
+)) + geom_histogram(aes(y= ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(tempmed_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(tempmed_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs (
+    title = "Distribuição da temperatura média durante a série histórica",
+    x = "Temperatura média",
+    y = "Densidade",
+    caption = "Assimetria -0.5 / Curtose -0.1"
+  ) + theme_light()
+```
+
+### 4.2.8 Boxplot da temperatura média
+
+O boxplot da temperatura média semanal resume a distribuição da variável ao longo da série histórica. A mediana, representada pela linha central da caixa, situa-se em torno de 25,8°C, enquanto o primeiro e terceiro quartis delimitam o intervalo onde se concentram 50% das observações (aproximadamente 25,0°C a 27,0°C). Os bigodes estendem‑se até cerca de 22°C e 29°C, abrangendo a maioria dos dados. 
+
+Observam‑se alguns outliers no limite inferior, indicando semanas com temperaturas médias excepcionalmente baixas. Do ponto de vista epidemiológico, a faixa térmica predominante é favorável ao desenvolvimento do mosquito _Aedes aegypti,_ contribuindo para a manutenção da transmissão da dengue ao longo do ano.
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de temperatura média
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = tempmed_round
+)) + 
+  geom_boxplot() +
+  labs(
+    title = "Boxplot de temperatura média",
+    subtitle = ""
+  ) +
+  theme_light()
+```
+
+### 4.2.9 Boxplot de temperatura média com violino de densidade
+
+O boxplot resume as medidas descritivas: a mediana em torno de 25,8°C, o intervalo interquartil (caixa) e os valores extremos (bigodes). Sobreposto a ele, o violino (silhueta azul) revela a densidade dos dados – quanto mais larga a silhueta, maior a concentração de observações naquela faixa de temperatura. Observa-se uma distribuição aproximadamente simétrica, com maior densidade entre 25°C e 27°C, confirmando a estabilidade térmica ao longo da série. A forma do violino indica pouca assimetria e ausência de caudas longas, reforçando que a temperatura média se mantém em uma faixa consistente, condição que favorece a proliferação contínua do Aedes aegypti.
+
+```{r, warning=FALSE, message=FALSE}
+#  boxplot de temperatura média + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = "", 
+           y = tempmed_round
+)) +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  geom_boxplot(width = 0.1) +
+  labs(
+    title = "Boxplot de temperatura média com violino de densidade",
+    subtitle = "A silhueta ao redor do boxplot demonstra a concentração de dados"
+  ) +
+  theme_light()
+```
+
+### 4.2.10 Histograma de temperatura máxima
+
+
+O histograma apresenta a distribuição da temperatura máxima semanal ao longo da série histórica e mostra a frequência relativa dos valores, sobreposto pela curva de densidade que suaviza a distribuição. As linhas verticais indicam a média (azul tracejada) e a mediana (verde pontilhada), ambas muito próximas, em torno de 30,2°C. 
+
+A assimetria de 0,1 e a curtose de -0,1 confirmam uma _distribuição praticamente simétrica e com formato próximo ao normal._ A maior concentração de observações situa-se entre 28°C e 32°C, intervalo térmico que favorece a atividade do mosquito _Aedes aegypti_ e a replicação do vírus da dengue, contribuindo para a transmissão sustentada ao longo do ano. 
+
+```{r, warning=FALSE, message=FALSE}
+# histograma de temperatura máxima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = tempmax_round
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(tempmax_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(tempmax_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição da temperatura máxima durante a série histórica",
+    x = "Temperatura máxima",
+    y = "Densidade",
+    caption = "Assimetria 0.1 / Curtose -0.1"
+  ) +
+  theme_light()
+```
+
+### 4.2.11 Boxplot de temperatura máxima
+
+O boxplot da temperatura máxima  sintetiza a distribuição da variável ao longo do período analisado. A mediana situa-se em torno de 30,2°C, enquanto o primeiro e terceiro quartis delimitam o intervalo onde se concentram 50% das observações (aproximadamente 29,2°C a 31,3°C). Os bigodes estendem-se até cerca de 26°C e 34°C, abrangendo a maioria dos dados. 
+
+Observa-se a ausência de outliers expressivos, indicando que as temperaturas máximas mantêm-se em uma faixa relativamente estável ao longo da série histórica. 
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de temperatura máxima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = tempmax_round
+)) + 
+  geom_boxplot() +
+  labs(
+    title = "Boxplot de temperatura máxima",
+    subtitle = ""
+  ) +
+  theme_light()
+```
+
+### 4.2.12 Boxplot de temperatura máxima com violino de densidade
+
+Combinamos o boxplot com o gráfico de violino para a temperatura máxima semanal. O boxplot  indica a mediana em 30,2°C, o intervalo interquartil entre 29,2°C e 31,3°C e a ausência de outliers expressivos. O violino revela a densidade dos dados, evidenciando uma distribuição simétrica com acentuada concentração na faixa entre 29°C e 32°C. 
+
+A forma compacta do violino confirma a estabilidade térmica das máximas ao longo da série, condição que mantém o ambiente favorável à proliferação do Aedes aegypti e à transmissão da dengue durante todo o ano.
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de temperatura máxima + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025,aes(
+  x = "", 
+  y = tempmax_round
+)) +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  geom_boxplot(width = 0.1) +
+  labs(
+    title = "Boxplot de temperatura máxima com violino de densidade",
+    subtitle = "A silhueta ao redor do boxplot demonstra a concentração de dados"
+  ) +
+  theme_light()
+
+```
+
+
+### 4.2.13 Histograma de temperatura mínima
+
+O histograma mostra a frequência relativa dos valores, sobreposto pela curva de densidade. As linhas verticais indicam a média (azul tracejada) em torno de 22,3°C e a mediana (verde pontilhada) em torno de 22,5°C. 
+
+A assimetria de -0,5 revela uma leve concentração à direita (cauda mais longa à esquerda), enquanto a curtose igual a 0 indica _formato próximo ao de uma distribuição normal._ A maior parte das observações concentra-se entre 21°C e 24°C, faixa térmica que se mantém favorável à sobrevivência do Aedes aegypti durante a noite e ao desenvolvimento do vetor. 
+
+```{r, warning=FALSE, message=FALSE}
+
+# histograma de temperatura máxima
+
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = tempmin_round
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(tempmin_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(tempmin_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição da temperatura mínima durante a série histórica",
+    x = "Temperatura mínima",
+    y = "Densidade",
+    caption = "Assimetria -0.5 / Curtose 0"
+  ) +
+  theme_light()
+```
+
+### 4.2.14 Boxplot de temperatura mínima
+
+O boxplot da temperatura mínima semanal resume a distribuição da variável ao longo do período analisado. A mediana situa-se em torno de 22,5°C, enquanto o primeiro e terceiro quartis delimitam o intervalo onde se concentram 50% das observações (aproximadamente 21,4°C a 23,4°C). Os bigodes estendem-se até cerca de 19°C no limite inferior e 25°C no superior. Observam-se alguns outliers abaixo de 19°C, indicando semanas com temperaturas mínimas excepcionalmente baixas. Do ponto de vista epidemiológico, mesmo os valores mais baixos ainda se mantêm dentro de uma faixa que permite a sobrevivência do mosquito Aedes aegypti, embora noites muito frias possam reduzir temporariamente a atividade vetorial.
+
+```{r, warning=FALSE, message=FALSE}
+# boxplot de temperatura mínima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = tempmin_round
+)) + 
+  geom_boxplot() +
+  labs(
+    title = "Boxplot de temperatura mínima",
+    subtitle = ""
+  ) +
+  theme_light()
+```
+
+### 4.2.15 Boxplot de temperatura mínima com violino de densidade
+
+
+Combinamos o boxplot com o gráfico de violino para representar a distribuição da temperatura mínima semanal. O boxplot mostra a mediana em 22,5°C, o intervalo interquartil entre 21,4°C e 23,4°C e a presença de alguns outliers inferiores (abaixo de 19°C). O violino revela a densidade dos dados, evidenciando uma leve assimetria negativa: há maior concentração de observações na porção superior da distribuição (entre 22°C e 24°C) e uma cauda mais alongada para valores mais baixos. A forma do violino confirma que, embora a maioria das semanas apresente mínimas amenas, ocorrem episódios pontuais de noites mais frias, especialmente nos invernos, sem no entanto comprometer de forma duradoura as condições favoráveis à sobrevivência do Aedes aegypti.
+
+
+```{r, warning=FALSE, message=FALSE}
+# boxplot de temperatura mínima + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "", 
+  y = tempmin_round
+)) +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  geom_boxplot(width = 0.1) +
+  labs(
+    title = "Boxplot de temperatura mínima com violino de densidade",
+    subtitle = ""
+  ) +
+  theme_light()
+
+
+```
+
+
+### 4.2.16 Histograma de RT 
+
+O Rt mede o potencial de transmissão da doença: valores > 1 indicam crescimento da epidemia, enquanto < 1 sugerem declínio. O histograma (barras azuis) com curva de densidade (linha vermelha) revela uma _distribuição extremamente assimétrica à direita,_ com assimetria de 4,6 e curtose de 22 — valores que indicam forte concentração em valores baixos e uma cauda direita muito longa. A média (linha azul tracejada) situa-se em torno de 0,9, enquanto a mediana (linha verde pontilhada) é 0,5, confirmando que a maioria das semanas apresenta Rt abaixo de 1 (transmissão controlada ou em declínio). 
+
+No entanto, a longa cauda à direita evidencia a ocorrência de semanas com Rt elevado (> 5), associadas a surtos epidêmicos de rápida expansão. Esse padrão é típico de doenças com transmissão intermitente, onde longos períodos de baixa atividade são interrompidos por picos epidêmicos.
+
+```{r, warning=FALSE, message=FALSE}
+# histograma de rt
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = Rt
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(Rt, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(Rt_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição de RT durante a série histórica",
+    x = "RT",
+    y = "Densidade",
+    caption = "Assimetria 4.6 / Curtose 22 "
+  ) +
+  theme_light()
+```
+
+
+### 4.2.17 Boxplot de RT com violino de densidade
+
+O boxplot revela uma mediana baixa (0,5) e uma concentração dos 50% centrais dos dados em valores próximos de zero, com o terceiro quartil ainda abaixo de 1. Destaca-se a presença de numerosos outliers superiores, representados por pontos acima do bigode, que correspondem a semanas com Rt elevado (alguns acima de 5). O violino evidencia a densidade dos dados: uma base extremamente larga em valores baixos (indicando alta frequência de Rt < 1) e uma cauda longa e estreita à direita, representando os raros episódios de transmissão intensa. 
+
+Essa visualização sintetiza o comportamento epidêmico da dengue em Alagoinhas: períodos prolongados de baixa transmissão interrompidos por surtos abruptos de rápida expansão.
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de rt + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = Rt
+)) + geom_boxplot() +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  labs(
+    title = "Boxplot de RT com violino de densidade"
+  ) +
+  theme_light()
+```
+
+
+### 4.2.18 Histograma de umidade média
+
+O histograma de umidade média com curva de densidade revela uma _distribuição aproximadamente simétrica,_ com assimetria igual a 0 e curtose de -0,5 (levemente achatada em relação à normal). As linhas verticais indicam a média (azul tracejada) e a mediana (verde pontilhada), ambas muito próximas, em torno de 77%. 
+
+A maior concentração das observações situa-se entre 70% e 85%, faixa de umidade considerada favorável à sobrevivência e reprodução do mosquito *Aedes aegypti*. A estabilidade da umidade média ao longo do ano contribui para a manutenção da população do vetor e, consequentemente, para a endemicidade da dengue na região. 
+
+```{r, warning=FALSE, message=FALSE}
+# histograma de umidade média
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = umidmed_round
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(umidmed_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(umidmed_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição da úmidade média durante a série histórica",
+    x = "Úmidade média",
+    y = "Densidade",
+    caption = "Assimetria 0 / Curtose -0.5 "
+  ) +
+  theme_light()
+```
+
+
+### 4.2.19 Boxplot de umidade média
+
+O boxplot  mostra a mediana em torno de 77%, com intervalo interquartil aproximadamente entre 73% e 81%, indicando que 50% das semanas apresentaram umidade média nessa faixa. Os bigodes estendem-se até cerca de 65% e 88%, com poucos outliers inferiores e superiores. O violino revela a densidade dos dados, confirmando uma distribuição aproximadamente simétrica, com ligeiro achatamento e concentração mais acentuada na região central (75% a 80%). A forma do violino reforça a estabilidade da umidade média ao longo da série, condição ambiental que mantém o habitat favorável à proliferação contínua do _Aedes aegypti_ e à transmissão da dengue.
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de umidade média + violino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = umidmed_round
+)) + geom_boxplot() +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  labs(
+    title = "Boxplot de úmidade média com violino de densidade"
+  ) +
+  theme_light()
+```
+
+### 4.2.20 Histograma de umidade mínima
+
+
+O histograma com curva de densidade (linha vermelha) revela uma _distribuição com leve assimetria negativa_ (-0,5) e curtose igual a 0, indicando formato próximo ao normal. As linhas verticais mostram a média (azul tracejada) em torno de 55% e a mediana (verde pontilhada) ligeiramente superior, confirmando a assimetria à esquerda. A maior parte das observações concentra-se entre 45% e 65%, faixa que representa condições de umidade moderada. Valores muito baixos de umidade mínima (< 30%) são raros, o que é relevante do ponto de vista epidemiológico, pois níveis extremamente baixos de umidade podem dessecar ovos e reduzir a longevidade dos mosquitos adultos. A predominância de umidade mínima moderada contribui para a manutenção da população do Aedes aegypti ao longo do ano.
+
+```{r, warning=FALSE, message=FALSE}
+
+# histograma de umidade mínima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = umidmin_round
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(umidmin_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(umidmin_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição da úmidade mínima durante a série histórica",
+    x = "Úmidade mínima",
+    y = "Densidade",
+    caption = "Assimetria -0.5 / Curtose 0"
+  ) +
+  theme_light()
+
+```
+
+### 4.2.21 Boxplot de umidade mínima
+
+O boxplot indica a mediana em torno de 60%, com intervalo interquartil aproximadamente entre 50% e 70%, revelando alguns outliers inferiores. O violino sobreposto evidencia a densidade dos dados, mostrando uma distribuição com maior concentração na faixa entre 60% e 80%, mas também revelando uma cauda alongada para valores mais baixos.
+
+A forma do violino confirma a ocorrência de períodos com umidade mínima reduzida, possivelmente associados a verões mais secos ou estiagens. Essas condições podem influenciar a dinâmica de transmissão da dengue, já que a umidade mínima interfere na sobrevivência do mosquito e no desenvolvimento do vetor.
+
+```{r, warning=FALSE, message=FALSE}
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = umidmin_round
+)) + geom_boxplot() +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  labs(
+    title = "Boxplot de úmidade com violino de densidade"
+  ) +
+  theme_light()
+```
+
+### 4.2.22 Histograma de umidade máxima
+
+O histograma com curva de densidade (linha vermelha) revela uma distribuição com leve assimetria negativa (-0,2) e curtose de -0,4, indicando formato ligeiramente achatado em relação à normal. As linhas verticais mostram a média (azul tracejada) e a mediana (verde pontilhada) muito próximas, em torno de 91%. A maior parte das observações concentra-se entre 85% e 95%, com frequência expressiva de valores próximos a 100%. Do ponto de vista epidemiológico, essa alta umidade máxima é extremamente favorável à proliferação do Aedes aegypti, pois ambientes saturados de umidade potencializam a sobrevivência dos ovos e a longevidade dos mosquitos adultos, contribuindo para a transmissão da dengue. Foram excluídas 21 semanas com dados ausentes ou inconsistentes de umidade máxima.
+
+```{r, warning=FALSE, message=FALSE}
+#  histograma da umidade máxima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = umidmax_round
+)) + geom_histogram(aes(y = ..density..), fill = "skyblue") +
+  geom_density(color = "red", size = 1) +
+  geom_vline(aes(xintercept = mean(umidmax_round, na.rm = TRUE)), 
+             color = "blue", 
+             linetype = "dashed", 
+             size = 1) +
+  geom_vline(aes(xintercept = median(umidmax_round, na.rm = TRUE)), 
+             color = "#458B00", 
+             linetype = "dotted", size = 1) +
+  labs(
+    title = "Distribuição da úmidade máxima durante a série histórica",
+    x = "Úmidade máxima",
+    y = "Densidade",
+    caption = "Assimetria -0.2 / Curtose -0.4"
+  ) +
+  theme_light()
+
+```
+
+### 4.2.23 Boxplot de umidade máxima
+
+O boxplot mostra a mediana em torno de 91%, com intervalo interquartil aproximadamente entre 88% e 94%, indicando que metade das semanas apresentou umidade máxima nessa faixa. Os bigodes estendem-se até cerca de 80% e 98%, com alguns outliers inferiores. O violino (silhueta azul) revela a densidade dos dados, evidenciando uma forte concentração de observações na porção superior da distribuição (acima de 90%) e uma cauda inferior mais alongada. A forma assimétrica do violino confirma que valores muito elevados de umidade máxima são frequentes na série histórica, enquanto valores moderadamente baixos são mais raros. Essa predominância de umidade máxima elevada cria condições ambientais altamente propícias à proliferação do Aedes aegypti e à transmissão da dengue na região.
+
+```{r, warning=FALSE, message=FALSE}
+
+# boxplot de umidade máxima + vilino de densidade
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = "",
+  y = umidmax_round
+)) + geom_boxplot() +
+  geom_violin(fill = "lightblue", alpha = 0.4) +
+  labs(
+    title = "Boxplot de úmidade máxima com violino de densidade"
+  ) +
+  theme_light()
+
+```
+
+# 5 ANÁLISE EXPLORATÓRIA DOS DADOS BIVARIADA E MULTIVARIADA
+
+A análise bivariada tem como objetivo investigar a relação entre pares de variáveis, permitindo identificar associações lineares ou monotônicas, além de possíveis dependências que possam explicar a dinâmica dos casos de dengue em função de fatores climáticos e epidemiológicos.
+
+## 5.1 CORRELAÇÃO
+
+
+A análise de correlação tem como objetivo mensurar a força e a direção da associação entre pares de variáveis, permitindo identificar possíveis relações entre a ocorrência de dengue e os fatores climáticos e epidemiológicos ao longo da série histórica. Foram empregados dois coeficientes de correlação, cada um com pressupostos e aplicações específicas:
+
+- _Correlação de Pearson_: coeficiente paramétrico que avalia relações lineares entre variáveis contínuas que seguem distribuição aproximadamente normal. Sua interpretação baseia-se na premissa de que a relação entre as variáveis é linear e os dados não apresentam desvios significativos da normalidade. Valores próximos a +1 indicam forte correlação positiva linear, valores próximos a -1 indicam forte correlação negativa linear, e valores próximos a zero indicam ausência de relação linear.
+
+- _Correlação de Spearman_: coeficiente não paramétrico baseado em ranks (postos), que avalia relações monotônicas — ou seja, quando uma variável tende a aumentar (ou diminuir) à medida que a outra aumenta, independentemente de a relação ser estritamente linear. Por não exigir normalidade dos dados e ser menos sensível a valores extremos (outliers), este coeficiente é particularmente adequado para variáveis com distribuições assimétricas, como é o caso do número de casos de dengue e do indicador Rt neste estudo. Sua interpretação é análoga à de Pearson, porém refere-se à consistência da ordenação dos dados, não à linearidade.
+
+A escolha do coeficiente de Spearman como principal referência para este estudo justifica-se pela natureza dos dados epidemiológicos, que frequentemente apresentam distribuições assimétricas, caudas longas e presença de outliers representativos de surtos — características que violam os pressupostos da correlação de Pearson, mas são adequadamente tratadas pela abordagem por ranks.
+
+A interpretação da magnitude dos coeficientes seguiu a classificação usual na literatura: valores absolutos abaixo de 0,3 indicam correlação fraca; entre 0,3 e 0,6, correlação moderada; acima de 0,6, correlação forte. Ressalta-se, no entanto, que _correlação não implica causalidade_: associações estatisticamente significativas devem ser interpretadas à luz do conhecimento epidemiológico e investigadas em análises posteriores com modelos que permitam controlar variáveis de confusão e avaliar defasagens temporais.
+
+### 5.1 Matriz de correlação
+
+Antes de calcular as correlações, foi criado um conjunto de dados contendo apenas as variáveis de interesse para a análise bivariada: número de casos, temperaturas (média, máxima e mínima), umidades (máxima, mínima e média), o indicador Rt e o nível de alerta epidemiológico. As variáveis foram renomeadas para facilitar a leitura e interpretação dos resultados, substituindo os nomes originais do banco de dados por rótulos mais intuitivos (ex.: tempmed_round para Temp.Media). Esse procedimento organiza o conjunto de dados para as etapas seguintes de cálculo das matrizes de correlação e visualização gráfica.
+
+```{r}
+# matriz de correlação
+
+vars_numeric <- dengue_alagoinhas_2015_2025 %>%
+  select(casos, tempmed_round, tempmax_round, tempmin_round, Rt, umidmax_round, umidmin_round, umidmed_round, nivel) %>%
+rename(
+  Casos = casos,
+  Temp.Media = tempmed_round,
+  Temp.Max = tempmax_round,
+  Temp.Min = tempmin_round,
+  Umid.Max = umidmax_round,
+  Umid.Min = umidmin_round,
+  Umid.Media = umidmed_round,
+  Nivel = nivel
+)
+
+```
+
+### 5.1.1 Correlação de Pearson
+
+A matriz de correlação de Pearson foi calculada para avaliar as relações lineares entre as variáveis do estudo. Este coeficiente pressupõe que os dados sigam distribuição aproximadamente normal e que a relação entre as variáveis seja linear. Os valores variam de -1 a +1, onde:
+
+Próximo de +1: forte correlação positiva linear
+
+Próximo de -1: forte correlação negativa linear
+
+Próximo de 0: ausência de relação linear
+
+A matriz revela correlações esperadas entre variáveis climaticas (colinearidade), como a forte associação positiva entre as diferentes medidas de temperatura (Temp.Media × Temp.Max: 0,76; Temp.Media × Temp.Min: 0,85). Entre as variáveis epidemiológicas, observa-se correlação positiva expressiva entre Casos e Nível (0,78) e entre Casos e Umid.Max (0,42). 
+
+No entanto, é importante interpretar estes resultados com cautela, pois diversas variáveis — especialmente Casos e Rt — apresentam distribuições fortemente assimétricas (conforme visto na seção 4.1), violando os pressupostos da correlação de Pearson. Por esta razão, o coeficiente de Spearman, apresentado a seguir, é mais adequado para a análise principal deste estudo.
+
+```{r}
+# matriz de correlação de Pearson
+
+matriz_cor_pearson <- cor(vars_numeric, use = "complete.obs", method = "pearson")
+round(matriz_cor_pearson, 2)
+cor_pearson_df <- as.data.frame(round(matriz_cor_pearson, 2))
+cor_pearson_df$Variavel <- rownames(cor_pearson_df)
+View(cor_pearson_df)
+
+```
+
+### 5.1.2 Correlaçao de Spearman
+
+A matriz de correlação de Spearman foi calculada como medida principal de associação entre as variáveis, por ser mais adequada à natureza dos dados epidemiológicos. Diferentemente de Pearson, o coeficiente de Spearman é baseado em ranks (postos) e não exige normalidade dos dados, sendo robusto a distribuições assimétricas e à presença de outliers — características marcantes das variáveis deste estudo, especialmente Casos (assimetria 2,9) e Rt (assimetria 4,6).
+
+Os coeficientes de Spearman (ρ) variam de -1 a +1 e interpretam-se de forma análoga aos de Pearson, porém referem-se à consistência da ordenação dos dados (relações monotônicas), não necessariamente lineares. Adotou-se a seguinte classificação para a força da correlação:
+
+|ρ| < 0,3: correlação fraca
+
+0,3 ≤ |ρ| < 0,6: correlação moderada
+
+|ρ| ≥ 0,6: correlação forte
+
+A matriz revela associações relevantes do ponto de vista epidemiológico.
+
+
+```{r}
+# correlação de spearman
+
+matriz_cor_spearman <- cor(vars_numeric, use = "complete.obs", method = "spearman")
+round(matriz_cor_spearman, 2)
+cor_spearman_df <- as.data.frame(round(matriz_cor_spearman, 2))
+cor_spearman_df$Variavel <- rownames(cor_spearman_df)
+View(cor_spearman_df)
+
+write.csv(matriz_cor_pearson, "matriz_correlação_pearson")
+write.csv(matriz_cor_spearman, "matriz_correlação_spearman")
+```
+
+### 5.1.3 Matriz de correlação de Spearman entre variaveis
+
+
+ Neste tipo de representação, a intensidade da cor indica a força da correlação, enquanto a tonalidade (vermelho ou azul) indica a direção: tons avermelhados representam correlações positivas, tons azulados representam correlações negativas, e a cor branca indica correlação próxima de zero. Os coeficientes numéricos são exibidos dentro de cada célula para consulta direta.
+
+A análise da matriz confirma e expande as observações anteriores:
+
+Associações epidemiológicas principais:
+
+- _Casos e Nível_ (ρ = 0,71): forte correlação positiva, validando que o sistema de níveis de alerta reflete adequadamente a intensidade da transmissão.
+- _Casos e Rt_ (ρ = 0,65): forte correlação positiva, confirmando o Rt como bom indicador do comportamento epidêmico.
+- _Casos e Umidade Máxima_ (ρ = 0,48): correlação moderada positiva, sugerindo influência das condições de alta umidade na ocorrência de casos.
+- _Casos e Umidade Média_ (ρ = 0,27): correlação fraca positiva.
+- _Casos e Umidade Mínima_ (ρ = 0,05): correlação muito fraca, praticamente nula.
+
+Relações entre variáveis climáticas:
+
+- Fortes correlações positivas entre as temperaturas (Temp.Media × Temp.Min: 0,81; Temp.Media × Temp.Max: 0,79), como esperado.
+- Fortes correlações positivas entre as umidades (Umid.Media × Umid.Min: 0,81; Umid.Media × Umid.Max: 0,58).
+- Correlações negativas moderadas a fortes entre temperaturas máximas e umidades mínimas (Temp.Max × Umid.Min: -0,49) e entre temperaturas mínimas e umidades máximas (Temp.Min × Umid.Max: -0,49), refletindo a relação inversa típica entre temperatura e umidade: dias mais quentes tendem a ter umidade relativa mais baixa.
+
+Relações entre Rt e variáveis climáticas:
+
+- O Rt apresenta correlações fracas com todas as variáveis climáticas (máxima ρ = 0,18 com Umid.Max), sugerindo que a transmissão é influenciada por fatores adicionais não capturados diretamente na análise, como densidade vetorial, imunidade populacional ou medidas de controle.
+
+A matriz evidencia que os casos de dengue estão mais fortemente associados aos indicadores epidemiológicos (nível e Rt) do que às variáveis climáticas isoladamente. Entre os fatores climáticos, a umidade máxima destaca-se com correlação moderada, enquanto as temperaturas apresentam associações fracas. Este padrão sugere que, no contexto de Alagoinhas, as condições climáticas observadas ao longo da série situam-se dentro da faixa favorável à transmissão, de modo que outros fatores (como sazonalidade de chuvas, densidade vetorial e circulação de sorotipos) podem ser mais determinantes para a ocorrência de picos epidêmicos.
+
+
+```{r, fig.width=10, fig.height=8}
+
+# matriz de correlação
+
+ggcorrplot(matriz_cor_spearman,
+           lab = TRUE,  
+           lab_size = 5,
+           colors = c("#4472C4", "white", "#C00000")) +
+             labs(
+               title = "Matriz de correlação de Spearman entre variáveis"
+)
+```
+
+## 5.2 SIGNIFICÂNCIA ESTATÍSTICA
+
+A avaliação da significância estatística é um passo fundamental na análise de correlações, pois permite distinguir associações que provavelmente refletem relações reais entre as variáveis daquelas que podem ter ocorrido ao acaso devido à variabilidade amostral. Para esta finalidade, aplicou-se o teste de correlação de Spearman a pares de variáveis de interesse epidemiológico.
+
+### 5.2.1 Teste de significância
+
+O teste de correlação de Spearman tem como hipótese nula (H₀) a ausência de correlação monotônica entre as variáveis na população (ρ = 0). O p-valor resultante indica a probabilidade de se observar uma correlação tão extrema quanto a encontrada na amostra, sob a hipótese de que a verdadeira correlação populacional é zero. Valores baixos de p (convencionalmente p < 0,05) levam à rejeição da hipótese nula, indicando que a correlação observada é estatisticamente significativa.
+
+Foram testados quatro pares de variáveis, selecionados com base na relevância epidemiológica e nos resultados exploratórios anteriores:
+
+```{r}
+
+# casos x rt
+
+cor.test(dengue_alagoinhas_2015_2025$casos,
+         dengue_alagoinhas_2015_2025$Rt,
+         method = "spearman",
+         exact = FALSE)
+  
+# casos x temperatura máxima
+
+cor.test(dengue_alagoinhas_2015_2025$casos,
+         dengue_alagoinhas_2015_2025$tempmax_round,
+         method = "spearman",
+         exact = FALSE)
+
+# casos x umidade máxima
+
+cor.test(dengue_alagoinhas_2015_2025$casos,
+         dengue_alagoinhas_2015_2025$umidmax_round,
+         method = "spearman",
+         exact = FALSE)
+
+# casos x nivel
+
+cor.test(dengue_alagoinhas_2015_2025$casos,
+         dengue_alagoinhas_2015_2025$nivel,
+         method = "spearman",
+         exact = FALSE)
+
+
+# resultado de significância de correlação
+
+significancia_cor <- data.frame(
+  Variaveis = c("casos × Rt",
+                "casos × temp máxima",
+                "casos × umidade máxima",
+                "casos × nível"),
+  
+  rho = c(0.64, 0.06, 0.48, 0.71),
+  
+  forca = c("forte",
+            "muito fraca",
+            "moderada",
+            "forte"),
+  
+  significancia = c("significativa",
+                    "não significativa",
+                    "significativa",
+                    "significativa")
+)
+
+head(significancia_cor)
+```
+
+Os resultados dos testes são sintetizados a seguir:
+
+Casos × Rt: correlação ρ = 0,64 (p < 0,001) — estatisticamente significativa. A forte associação confirma que o Rt é um indicador robusto da dinâmica de transmissão, validando seu uso em sistemas de alerta precoce.
+
+Casos × Temperatura Máxima: correlação ρ = 0,06 (p = 0,165) — não significativa. Este resultado sugere que, na escala semanal e dentro da faixa térmica observada, a temperatura máxima isoladamente não apresenta relação monotônica detectável com o número de casos.
+
+Casos × Umidade Máxima: correlação ρ = 0,48 (p < 0,001) — estatisticamente significativa. A associação moderada reforça a hipótese de que períodos com alta umidade (associados a chuvas) criam condições ambientais favoráveis à proliferação vetorial e ao aumento da transmissão.
+
+Casos × Nível: correlação ρ = 0,71 (p < 0,001) — estatisticamente significativa. A forte correlação valida a consistência do sistema de classificação por níveis de alerta, demonstrando que a categorização reflete adequadamente a intensidade da epidemia.
+
+
+### 5.2.2 Correlação entre variáveis por significância
+
+Nesta representação, cada linha corresponde a um par de variáveis, e a intensidade da cor reflete a magnitude do coeficiente de correlação (ρ), seguindo a mesma escala da matriz anterior: tons avermelhados indicam correlações positivas mais fortes, tons azulados indicariam correlações negativas (ausentes neste recorte), e a cor branca representaria correlação próxima de zero. Os valores numéricos dos coeficientes são exibidos dentro de cada célula para consulta direta.
+
+```{r}
+# correlação entre variáveis epidemiologicas por significancia
+
+
+ggplot(significancia_cor, aes(x = "rho", y = Variaveis, fill = rho)) +
+  geom_tile(color = "black") +
+  geom_text(aes(label = rho), size = 5) +
+  scale_fill_gradient2(
+    low = "#4472C4",
+    mid = "white",
+    high = "#C00000",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Correlação entre variáveis epidemiológicas por significância",
+    x = "",
+    y = ""
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+Esta síntese gráfica complementa a Tabela X apresentada anteriormente, oferecendo uma perspectiva visual intuitiva que facilita a identificação dos padrões de associação: as variáveis epidemiológicas (nível e Rt) apresentam as correlações mais fortes com os casos, seguidas pela umidade máxima como fator climático relevante, enquanto a temperatura máxima isoladamente não mostra associação significativa na análise contemporânea.
+
+A distinção visual entre as correlações significativas (casos × nível, casos × Rt, casos × umidade máxima) e a não significativa (casos × temperatura máxima) reforça a importância de considerar a significância estatística na interpretação das relações entre variáveis, evitando conclusões baseadas apenas na magnitude dos coeficientes sem a devida avaliação da probabilidade de ocorrência ao acaso
+
+## 5.3 VISUALIZAÇÃO DAS RELAÇÕES ENTRE AS VARIÁVEIS
+
+Para explorar as associações entre os casos de dengue e os fatores ambientais e epidemiológicos, esta seção apresenta visualizações gráficas que relacionam a variável resposta (casos) com diferentes preditores. Foram construídos gráficos de dispersão e boxplots para analisar a distribuição dos casos em função do nível de alerta, do número de reprodução efetivo (Rt), da temperatura máxima e da umidade máxima. Essas representações permitem identificar padrões, tendências e possíveis relações não lineares entre as variáveis ao longo da série histórica.
+
+#### 5.4.1 Casos X Nível
+
+#### 5.4.1.1 Gráfico de dispersão
+
+O gráfico de dispersão apresenta uma abordagem multivariada para explorar a relação entre o nível de alerta epidemiológico (variável discreta ordinal, assumindo valores 1, 2 e 4) e o número de casos de dengue. O gráfico combina três elementos:
+
+_Geom_jitter()_: pontos individuais ligeiramente deslocados para evitar sobreposição, mostrando a distribuição real das observações em cada nível
+
+_Geom_density_2d()_: curvas de densidade bidimensional que indicam regiões de maior concentração de pontos
+
+_Geom_smooth(method = "loess")_: linha de tendência não-paramétrica (azul) que suaviza a relação entre as variáveis
+
+Observações técnicas:
+
+Há uma clara concentração de pontos com baixo número de casos no nível 1. O nível 2 apresenta maior dispersão, com casos moderados. O nível 4 concentra as observações com maior número de casos, embora com variabilidade. As curvas de densidade bidimensional reforçam os agrupamentos observados
+
+
+Esta visualização, embora informativa, apresenta limitações importantes para representar a correlação entre as variáveis. A variável nível é ordinal discreta (1, 2, 4), enquanto casos é contínua. Técnicas como geom_density_2d() são mais adequadas para pares de variáveis contínuas. Também, a base não contém registros de nível 3, criando uma descontinuidade na escala ordinal, mesmo com jitter, há sobreposição significativa em níveis com muitas observações (especialmente nível 1).
+O coeficiente de Spearman (ρ = 0,71) já demonstrou forte correlação, mas o gráfico não comunica claramente a magnitude dessa associação.
+
+```{r, warning=FALSE, message=FALSE}
+
+# dispersão nível x casos
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = nivel,
+  y = casos
+)) + 
+  geom_smooth(method = "loess", color = "skyblue", size = 0.5) +
+  geom_jitter() +
+  geom_density_2d() +
+  labs(
+    title = "Correlação entre nível (1-4) e casos",
+    subtitle ="Váriavel ordinal discreta. A linha azul representa a densidade dos casos."
+  ) +
+  theme_light()
+```
+
+#### 5.4.1.2 Boxplots de distribuição
+
+Esta visualização é mais adequada à natureza das variáveis do que a anterior, pois trata o nível como variável categórica ordinal e permite comparação direta das distribuições.
+
+
+Nível 1 (situação normal/baixa transmissão): concentra a grande maioria das observações com mediana muito baixa (próxima de zero) e caixa compacta, indicando que semanas neste nível apresentam consistentemente poucos casos. Os outliers superiores, no entanto, mostram que mesmo em nível 1 podem ocorrer semanas com casos moderados.
+
+Nível 2 (atenção/aumento de risco): apresenta mediana mais elevada que o nível 1, maior dispersão (caixa mais alongada) e outliers superiores mais altos, refletindo o aumento da transmissão.
+
+Nível 4 (emergência/surto): exibe a mediana mais alta e a maior variabilidade, com caixa estendendo-se a valores elevados e outliers superiores que alcançam o máximo da série (próximo a 100 casos). A ausência do nível 3 é visualmente evidente, criando uma descontinuidade na escala ordinal.
+
+A progressão dos boxplots valida a classificação dos níveis de alerta:
+
+- A transição do nível 1 para o 2 reflete aumento tanto na frequência quanto na magnitude dos casos;
+
+- O nível 4 concentra os episódios de maior transmissão, com semanas de surto claramente distinguíveis dos padrões de endemicidade;
+
+- A forte correlação de Spearman (ρ = 0,71) entre casos e nível fica visualmente evidente na tendência de aumento da mediana e da dispersão à medida que o nível se eleva.
+
+Novamente: a base não contém registros de nível 3, o que é consistente com a hipótese de transição rápida entre situação de atenção (nível 2) e emergência (nível 4) em Alagoinhas, sem passagem pelo estágio intermediário de alerta.
+
+
+```{r}
+
+#boxplot nivel x casos
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = factor(nivel), y = casos)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title = "Distribuição de casos por nível epidemiológico",
+    x = "Nível",
+    y = "Casos"
+  ) +
+  theme_light()
+
+```
+
+### 5.4.1.4 Gráfico de dispersão por nível
+
+Diferentemente do boxplot, que resume a distribuição em quartis, esta visualização mostra cada observação individualmente, com leve deslocamento horizontal (jitter) para evitar sobreposição total dos pontos e revelar a densidade real dos dados.
+
+
+Nível 1: Concentração massiva de pontos próximos a zero, formando uma faixa densa na base do gráfico, com poucos pontos dispersos para valores mais altos (até ~40 casos). Esta distribuição reflete o predomínio de semanas com transmissão controlada ou ausente.
+
+Nível 2: Pontos mais espalhados verticalmente, com presença frequente de valores entre 10 e 40 casos, e alguns pontos isolados acima de 60 casos. A densidade ainda é maior na parte inferior, mas a dispersão é claramente superior à do nível 1.
+
+Nível 4: Pontos distribuídos por toda a faixa de valores, com concentração notável entre 20 e 60 casos, e diversos pontos acima de 80 casos, incluindo o máximo da série (~100 casos). A variabilidade é máxima neste nível.
+
+Nível 3: Ausência completa de observações, confirmada visualmente pelo espaço vazio entre os níveis 2 e 4.
+
+
+A progressão visual da densidade e dispersão dos pontos confirma a forte associação entre nível de alerta e magnitude dos casos (ρ = 0,71). Observa-se que mesmo no nível 1, ocorrem semanas com casos moderados (outliers), indicando que o sistema de alerta pode não capturar imediatamente aumentos pontuais. O nível 2 funciona como uma zona de transição, com mistura de semanas de baixa e média incidência. O nível 4 concentra não apenas os valores mais altos, mas também uma variabilidade muito maior, sugerindo que surtos podem ter intensidades bastante diferentes entre si. Uma vez ultrapassado o limiar do nível 2, a transmissão frequentemente atinge rapidamente critérios para nível 4, sem permanecer em um estágio intermediário de alerta.
+
+```{r}
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = factor(nivel), y = casos)) +
+  geom_jitter(width = 0.2, alpha = 0.5) +
+  labs(
+    title = "Casos de dengue por nível epidemiológico",
+    x = "Nível",
+    y = "Casos"
+  ) +
+  theme_light()
+```
+
+#### 5.4.1.5  Boxplot de distribuição + dispersão dos casos
+
+Esse boxplot fornece um resumo estatístico robusto da distribuição em cada nível, enquanto o jitter sobrepõe os pontos individuais, revelando a densidade real e a variabilidade dos dados. A transição do nível 1 para o 2 não é abrupta: existe uma zona de sobreposição onde semanas com casos moderados podem ocorrer em ambos os níveis, sugerindo que outros fatores (além do número bruto de casos) influenciam a classificação do nível. A variabilidade aumenta consistentemente com o nível: quanto mais alto o nível, maior a incerteza sobre quantos casos esperar. No nível 4, uma semana pode ter desde 10 até 100 casos. Os outliers no nível 1 (semanas com casos moderados em contexto de baixa transmissão) merecem investigação específica: podem representar falhas na classificação, introdução de novos sorotipos, ou eventos focalizados. A ausência do nível 3 é novamente evidente, e a distribuição dos pontos sugere que, uma vez ultrapassado o limiar do nível 2, os casos frequentemente saltam diretamente para a faixa do nível 4, consistente com a hipótese de transição rápida
+
+```{r}
+
+# boxplot + distribuição casos x nivel
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = factor(nivel), y = casos)) +
+  geom_boxplot(fill = "lightblue") +
+  geom_jitter(width = 0.15, alpha = 0.4) +
+  labs(
+    title = "Casos de dengue por nível epidemiológico",
+    x = "Nível",
+    y = "Casos"
+  ) +
+  theme_light()
+```
+
+### 5.4.2 Casos x RT
+
+### 5.4.1.1 Gráfico de dispersão
+
+O gráfico abaixo combina três elementos para explorar esta associação:
+
+_Geom_jitter()_: pontos individuais mostrando cada semana epidemiológica, com leve deslocamento para evitar sobreposição total e revelar a densidade dos dados
+
+_Geom_density_2d()_: curvas de contorno que indicam regiões de maior concentração de observações
+
+_Geom_smooth(method = "lm")_: linha de regressão linear (vermelha) com intervalo de confiança (área sombreada)
+
+A relação entre casos e Rt é central para a epidemiologia de doenças infecciosas:
+
+Rt < 1: transmissão em declínio (maioria das semanas em Alagoinhas)
+
+Rt = 1: transmissão estável
+
+Rt > 1: transmissão em crescimento (semanas epidêmicas)
+
+O gráfico revela um padrão consistente com a dinâmica esperada.
+
+_Fase endêmica (canto inferior esquerdo):_ alta densidade de pontos com poucos casos e Rt < 1, representando a maior parte do período analisado
+
+_Fase de crescimento (região central):_ pontos com casos moderados e Rt > 1, indicando semanas onde a transmissão estava acelerando
+
+_Pico e declínio (parte superior direita):_ observações com muitos casos mas Rt já próximo ou abaixo de 1, sugerindo que o pico da epidemia foi atingido e a transmissão começa a desacelerar.
+
+
+```{r, warning = FALSE, message= FALSE}
+
+# dispersão casos x rt
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = casos,
+  y = Rt
+)) +
+  geom_smooth(method = "lm", color = "red", size = 0.5) +
+  geom_jitter() +
+  geom_density_2d() +
+  labs(
+    title = "Correlação entre rt e casos"
+  ) +
+  theme_light()
+```
+
+#### 5.4.1.2 Gráfico de dispersão aprimorado
+
+Esse gráfico apresenta a relação entre o número de casos de dengue e o indicador Rt com os pontos estratificados pelo nível de alerta epidemiológico. Foram adicionadas retas de regressão linear para cada nível, permitindo comparar o comportamento da relação casos-Rt em diferentes contextos de transmissão.
+
+Nível 1 concentra-se na região de baixo Rt (<1) e baixos casos (<20), representando o padrão endêmico basal onde a transmissão está controlada ou em declínio. Alguns pontos isolados em Rt mais elevado indicam episódios pontuais de aumento de transmissão que não resultaram em elevação do nível de alerta.
+
+Nível 2 distribui-se em uma faixa mais ampla (Rt <1 até ~3, casos até ~60), capturando situações de atenção onde a transmissão já apresenta sinais de crescimento, mas ainda não atingiu critérios para emergência.
+
+Nível 4 ocupa predominantemente a região de Rt mais elevado (1–4) e casos mais altos (20–100), com alguns pontos em Rt <1 representando a fase de declínio pós-pico, quando os casos ainda são numerosos mas a transmissão já desacelerou.
+
+
+
+```{r,warning=FALSE, message=FALSE}
+
+# dispersão aprimorada casos x rt
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = Rt, y = casos, color = nivel)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Correlação entre casos e Rt",
+    x = "Rt (número de reprodução)",
+    y = "Número de casos"
+  ) +
+  theme_light()
+
+```
+
+A regressão linear simples não captura a não-linearidade e as defasagens temporais inerentes à relação casos-Rt. Em epidemias, o Rt elevado precede o aumento de casos, e o pico de casos ocorre quando o Rt já começa a declinar — dinâmica que análises de séries temporais com defasagens podem capturar adequadamente. A sobreposição entre níveis, no entanto, reforça a importância de utilizar múltiplos indicadores na vigilância epidemiológica, combinando medidas de magnitude (casos, nível) e de dinâmica (Rt) para uma compreensão mais completa do comportamento da doença.
+
+
+### 5.4.3 Casos x Tempereratura máxima
+
+#### 5.4.3.1 Gráfico de dispersão
+
+A ausência de um padrão claro na relação entre temperatura máxima e casos é consistente com os resultados da análise de correlação.Ddentro da faixa térmica observada em Alagoinhas (predominantemente 28–33°C), a temperatura máxima não atua como fator limitante ou disparador de surtos.
+
+Esee resultado não significa que a temperatura seja irrelevante para a dengue, mas sim que _a faixa térmica do município é consistentemente favorável ao vetor durante todo o ano_.
+
+Outros fatores como umidade, chuvas, densidade vetorial, circulação de sorotipos, provavelmente têm maior influência na variação dos casos.
+
+```{r, warning=FALSE, message=FALSE}
+
+#dispersão temperatura máxima x casos
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = tempmax_round, y = casos)) +
+  
+  geom_point(alpha = 0.6) +
+  
+  geom_smooth(method = "loess", color = "red") +
+  
+  labs(
+    title = "Relação entre temperatura máxima e número de casos de dengue",
+    x = "Temperatura máxima (°C)",
+    y = "Número de casos"
+  ) +
+  
+  theme_light()
+
+```
+
+#### 5.4.3.2 Boxplot de casos por faixa de temperatura
+
+Antes de gerar o gráfico, foi necessário categorizar a variável contínua tempmax_round em faixas temáticas. Utilizou-se a função cut() com a seguinte configuração
+
+```{r, warning=FALSE, message=FALSE}
+
+#categorizando temperatura em faixas
+
+dengue_alagoinhas_2015_2025$temp_faixa <- cut(
+  dengue_alagoinhas_2015_2025$tempmax_round,
+  breaks = c(20,25,30,35,40),
+  labels = c("20-25","25-30","30-35","35-40")
+)
+
+```
+
+_Faixa 20-25°C:_ apresenta mediana baixa (próxima de 5 casos) e caixa compacta (Q1-Q3 entre ~0 e 15 casos), com outliers superiores alcançando até ~60 casos. O número reduzido de observações nesta faixa (bigode inferior curto) reflete a baixa frequência de temperaturas máximas tão baixas em Alagoinhas.
+
+_Faixa 25-30°C:_ mediana ligeiramente superior (~8 casos), maior dispersão (caixa mais alongada) e outliers superiores mais frequentes, alguns próximos a 80 casos. Esta faixa contém o maior volume de observações.
+
+_Faixa 30-35°C:_ mediana similar à faixa anterior (~8 casos), mas com caixa ligeiramente mais compacta e outliers superiores igualmente presentes até ~80 casos.
+
+_Faixa 35-40°C:_ mediana mais baixa (~5 casos) e caixa compacta, porém com outliers superiores alcançando os valores máximos da série (~100 casos). O número reduzido de observações nesta faixa (bigodes curtos) indica que temperaturas extremamente altas são pouco frequentes.
+
+A análise por faixas revela nuances que o gráfico de dispersão anterior não capturava.
+
+_Amplitude térmica favorável:_ As faixas 25-30°C e 30-35°C concentram não apenas o maior número de observações, mas também a maior variabilidade de casos, incluindo tanto semanas de baixa quanto de alta transmissão. Isto sugere que, dentro desta faixa, outros fatores determinam se haverá ou não surto.
+
+_Extremos térmicos:_ Tanto temperaturas muito baixas (20-25°C) quanto muito altas (35-40°C) apresentam menor volume de observações e distribuições mais compactas, exceto por outliers isolados. Os outliers na faixa 35-40°C, no entanto, atingem os valores máximos da série, indicando que surtos podem ocorrer mesmo em condições de calor extremo.
+
+_Ausência de padrão monotônico:_ Não se observa uma tendência clara de aumento ou diminuição dos casos à medida que a temperatura aumenta — as medianas oscilam sem direção definida, e a variabilidade é alta em todas as faixas.
+
+```{r, warning=FALSE, message=FALSE}
+
+# distribuição da temp.máxima x casos por faixas
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = temp_faixa, y = casos)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title = "Distribuição de casos por faixa de temperatura máxima",
+    x = "Temperatura máxima (°C)",
+    y = "Casos"
+  ) +
+  theme_light()
+
+```
+
+### 5.4.5 Casos x Umidade máxima
+
+#### 5.4.5.1 Gráfico de dispersão 
+
+O gráfico combina pontos individuais (com jitter para evitar sobreposição) com uma curva de suavização LOESS (vermelha) para explorar o padrão da associação. A linha vertical azul tracejada em 90% marca um ponto de atenção sugerido pela análise exploratória.
+
+A relação positiva entre umidade máxima e casos é consistente com os resultados da análise de correlação: períodos com alta umidade máxima (geralmente associados a chuvas) criam condições ambientais favoráveis à proliferação do mosquito Aedes aegypti
+
+O padrão observado sugere que:
+
+_Limiar inferior:_ Abaixo de 80% de umidade máxima, as condições são menos favoráveis — poucas observações e casos baixos
+
+_Zona de risco:_ Entre 85% e 95%, a probabilidade de ocorrência de casos moderados a altos aumenta progressivamente
+
+_Saturação:_ Acima de 95%, a relação se estabiliza ou apresenta maior variabilidade, possivelmente por outros fatores limitantes
+
+```{r, warning=FALSE, message=FALSE}
+
+#dispersão da temperatura máxima
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = umidmax_round,
+  y = casos
+)) +
+  geom_jitter() +
+  geom_smooth(method = "loess", size = 0.5, color = "red") +
+  geom_vline(xintercept = 90, linetype = "dashed", color = "blue") +
+  labs(
+    title = "Correlação entre casos e umidade máxima",
+    subtitle = "A linha azul indica o ponto de atençao da correlação"
+  ) +
+  theme_light() 
+
+```
+
+#### 5.4.1.2 Boxplot de casos por faixa de temperatura
+
+As faixas foram criadas categorizando a variável contínua umidmax_round em intervalos de 5 a 10 pontos percentuais, permitindo identificar padrões na relação entre umidade e ocorrência de casos.
+
+```{r}
+# criando faixas de umidade
+
+dengue_alagoinhas_2015_2025$umid_faixa <- cut(
+  dengue_alagoinhas_2015_2025$umidmax_round,
+  breaks = c(70, 80, 85, 90, 95, 100),
+  labels = c("70-80", "80-85", "85-90", "90-95", "95-100"),
+  include.lowest = TRUE
+)
+```
+
+_Faixa 70-80%:_ Apresenta mediana muito baixa (próxima de zero) e caixa compacta (Q1-Q3 entre 0 e ~5 casos), com outliers superiores isolados alcançando até ~40 casos. O número reduzido de observações nesta faixa reflete a baixa frequência de umidades máximas tão baixas em Alagoinhas.
+
+_Faixa 80-85%:_ Mediana ligeiramente superior (~5 casos), caixa ainda compacta, mas com outliers superiores mais frequentes, alguns próximos a 60 casos.
+
+_Faixa 85-90%:_ Mediana em torno de 5-8 casos, com caixa mais alongada (Q1-Q3 entre ~2 e ~15 casos) e presença regular de outliers superiores até ~70 casos.
+
+_Faixa 90-95%:_ Mediana mais elevada (~10 casos) e maior dispersão (caixa estendendo-se de ~5 a ~25 casos), com outliers superiores frequentes alcançando 80-90 casos. Esta faixa concentra o maior volume de observações.
+
+_Faixa 95-100%:_ Mediana em torno de 8 casos, caixa alongada (Q1-Q3 entre ~3 e ~25 casos) e outliers superiores atingindo os valores máximos da série (~100 casos). O número de observações diminui em relação à faixa anterior.
+
+_NA (dados ausentes):_ Representa as 21 semanas com valores inconsistentes de umidade máxima (incluindo o outlier 173,2% substituído por NA). A presença de outliers superiores nesta categoria indica que, mesmo sem registro de umidade, ocorreram semanas com casos elevados.
+
+```{r, warning=FALSE,message=FALSE}
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = umid_faixa, y = casos)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title = "Distribuição de casos por faixa de umidade máxima",
+    x = "Umidade máxima (%)",
+    y = "Número de casos"
+  ) +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+# 6 ANÁLISE DAS SÉRIES TEMPORAIS
+
+A análise de séries temporais constitui uma abordagem fundamental para compreender a dinâmica da dengue ao longo do período estudado. Enquanto as análises univariada e bivariada exploraram distribuições e associações entre variáveis de forma estática, a perspectiva temporal permite investigar como os casos evoluem no tempo, revelando padrões que não seriam detectáveis em cortes transversais.
+
+A natureza longitudinal dos dados — 575 semanas epidemiológicas consecutivas entre 2015 e 2025 — torna esta abordagem não apenas possível, mas necessária. Doenças transmitidas por vetores, como a dengue, apresentam características temporais marcantes que a análise de séries temporais pode capturar:
+
+_Sazonalidade:_ períodos do ano com maior incidência, relacionados a condições climáticas favoráveis ao vetor;
+
+_Tendências de longo prazo:_ aumento ou diminuição gradual dos casos ao longo dos anos;
+
+_Surtos epidêmicos:_ elevações abruptas e temporárias na transmissão;
+
+Nesta seção, serão explorados diferentes aspectos da série temporal de casos de dengue em Alagoinhas, complementando as análises anteriores com a dimensão temporal que lhes é inerente. A análise temporal não apenas sintetiza os achados anteriores em uma perspectiva dinâmica, mas também abre caminho para modelagens preditivas e para o planejamento de ações de vigilância baseadas na sazonalidade e na tendência da doença no município.
+
+### 6.1 Série temporal de casos
+
+Reconstruimos com um gráfico de linhas a série temporal completa do número de casos de dengue em Alagoinhas ao longo das 575 semanas epidemiológicas entre 2015 e 2025, combinando a linha original dos dados com uma linha de regressão linear que revela a tendência de longo prazo subjacente à variabilidade semanal. A linha original mostra elevada variabilidade semana a semana, com picos agudos que atingem valores próximos a 100 casos intercalados por longos períodos de baixa incidência, padrão característico de doenças endêmicas transmitidas por vetores. 
+A curva de suavização LOESS, por sua vez, revela uma tendência que permanece relativamente estável e ligeiramente declinante entre 2015 e 2017, eleva-se de forma moderada entre 2018 e 2019, e _apresenta aceleração progressiva a partir de 2020, com crescimento mais acentuado entre 2023 e 2025,_ quando atinge os maiores valores médios da série. 
+
+Esta tendência ascendente nos anos recentes sugere um possível aumento na circulação viral, mudanças nas condições ambientais ou redução na efetividade das medidas de controle, indicando que `_os surtos estão se tornando não apenas mais intensos, mas também mais frequentes._ A linha de tendência suavizada é particularmente útil para comunicar a direção geral da epidemia a gestores e formuladores de políticas, pois sintetiza a evolução da doença ao longo da década e reforça a importância do monitoramento contínuo, indicando que os fatores que impulsionam a transmissão podem estar se intensificando em Alagoinhas e exigem atenção redobrada da vigilância epidemiológica.
+
+```{r, warning=FALSE, message=FALSE}
+
+# linha temporal dos casos
+
+ggplot(dengue_alagoinhas_2015_2025, aes(
+  x = data_iniSE,y = casos
+)) +
+  geom_line() +
+  labs(
+    title = "Linha temporal de casos"
+  ) +
+  geom_smooth(method = "loess", size = 0.5) +
+  theme_light()
+```
+
+### 6.2 Distribuição mensal dos casos na série histórica
+
+Logo abaixo criamos o boxplot da distribuição do número de casos de dengue para cada mês do ano, agregando todas as semanas epidemiológicas do período 2015–2025, com o objetivo de identificar padrões sazonais recorrentes na incidência da doença ao longo do calendário anual. 
+
+Observa-se que os meses de janeiro a março concentram as menores medianas (próximas de zero) e caixas compactas, com poucos outliers isolados, representando o período de menor atividade da doença. A partir de abril até junho, inicia-se uma elevação gradual das medianas e aumento da dispersão, com caixas mais alongadas e presença mais frequente de outliers superiores que alcançam entre 40 e 60 casos. O período de julho a setembro constitui a janela de maior incidência, com medianas atingindo seus valores mais altos (entre 5 e 10 casos), caixas mais alongadas (Q1-Q3 entre aproximadamente 2 e 20 casos) e outliers superiores frequentes, alguns ultrapassando 80 casos, indicando que é neste intervalo que os surtos de maior magnitude tendem a ocorrer. De outubro a dezembro observa-se declínio progressivo das medianas e da dispersão, retornando aos padrões do início do ano. Esta sazonalidade bem definida, com pico de transmissão concentrado nos meses de inverno e início da primavera (junho a setembro), é consistente com o comportamento da dengue em regiões tropicais e subtropicais, onde temperaturas amenas e umidade elevada no período pós-chuvas criam condições ótimas para a proliferação do Aedes aegypti e para a replicação viral. 
+
+O padrão identificado permite o planejamento antecipado de ações de controle vetorial nos meses que antecedem o pico (março a maio), a alocação direcionada de recursos para o período de maior demanda e a comunicação de risco à população sobre a janela sazonal de maior transmissão, constituindo subsídio importante para a vigilância epidemiológica municipal.
+
+```{r}
+
+# distribuição mensal dos casos
+
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = mes, y = casos)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title = "Distribuição mensal dos casos de dengue (2015–2025)",
+    subtitle = "Sazonalidade: meses com maior incidência",
+    x = "Mes",
+    y = "Numero de casos"
+  ) +
+  theme_light()
+```
+
+
+Outra representação simplificada da distribuição mensal de casos de dengue durante a série histórica é o gráfico de barras emilhadas. As barras alongadas (y) representam maior concentração de casos.
+
+
+```{r}
+
+# barras verticais de distribuição mensal de casos
+
+ggplot(dengue_alagoinhas_2015_2025,aes(
+  x = casos,
+  y = mes
+)) + geom_col(fill = "skyblue") +
+  labs(title = "Distribuição mensal dos casos de dengue (2015–2025)" ) +
+  theme_light()
+```
+
+### 6.3 Distribuição anual dos casos de dengue na série histórica
+
+Também foram criados boxplots da distribuição do número de casos de dengue para cada ano do período analisado, permitindo comparar a intensidade e variabilidade da transmissão entre os diferentes anos e identificar tendências temporais de longo prazo. 
+
+Observa-se que os anos de 2015 a 2017 apresentam medianas baixas (próximas de zero) e caixas compactas, com poucos outliers superiores isolados, caracterizando um período de transmissão controlada e surtos pouco frequentes. Entre 2018 e 2019, há uma elevação moderada das medianas e aumento da dispersão, com caixas mais alongadas e presença mais frequente de outliers na faixa de 40 a 60 casos, indicando intensificação gradual da atividade epidêmica. A partir de 2020, observa-se aceleração progressiva: as medianas elevam-se consistentemente, as caixas tornam-se mais alongadas e os outliers superiores tornam-se mais numerosos e atingem valores mais altos, com destaque para 2023, 2024 e 2025, onde os outliers ultrapassam 80 casos e o limite superior das caixas alcança os patamares mais elevados da série. Este padrão revela uma tendência de aumento tanto na frequência quanto na magnitude dos surtos ao longo da década, com clara aceleração nos anos mais recentes. 
+
+Esta distribuição anual confirma visualmente a tendência ascendente identificada na série temporal, reforçando a necessidade de atenção redobrada da vigilância epidemiológica e sugerindo que fatores como mudanças climáticas, circulação de novos sorotipos ou relaxamento das medidas de controle podem estar contribuindo para a intensificação da dengue em Alagoinhas nos últimos anos.
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# distribuição anual dos casos
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = ano, y = casos)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(
+    title = "Distribuição anual dos casos de dengue (2015–2025)",
+    subtitle = "Sazonalidade: anos com maior incidência",
+    x = "Mes",
+    y = "Numero de casos"
+  ) +
+  theme_light()
+```
+
+
+### 6.4 Série temporal de casos explicada por umidade máxima
+
+O gráfico abaixo apresenta a evolução temporal dos casos de dengue com a linha colorida pela umidade máxima registrada em cada semana epidemiológica. O gradiente de cores varia do verde (umidades mais baixas) ao vermelho (umidades mais altas), permitindo visualizar simultaneamente a progressão dos casos e as condições de umidade que os acompanham.
+
+_Período 2015–2019:_ Casos predominantemente baixos, com picos esporádicos. As cores variam entre verde e amarelo, indicando umidades máximas moderadas a altas, mas sem um padrão claro de associação.
+
+_Período 2020–2022:_ Aumento gradual na frequência e magnitude dos picos. Observa-se que os picos mais expressivos (acima de 50 casos) frequentemente apresentam coloração alaranjada ou vermelha, sugerindo associação com semanas de umidade máxima elevada.
+
+_Período 2023–2025:_ Concentração dos maiores picos da série (acima de 80 casos). A coloração predominantemente vermelha nesses picos indica que ocorreram em condições de umidade máxima muito alta (próxima ou acima de 95%). A tendência ascendente dos casos é acompanhada por uma maior frequência de semanas com umidade elevada.
+
+```{r, warning=FALSE, message=FALSE}
+
+# serie temporal de casos por umidade máxima
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = data_iniSE, y = casos, color = umidmax_round)) +
+  geom_line() +
+  scale_color_gradient(low = "green", high = "red") +
+  geom_line(linewidth = 0.8) +
+  labs(
+    title = "Casos de dengue ao longo do tempo e umidade máxima",
+    x = "Tempo",
+    y = "Casos",
+    color = "Umidade máxima"
+  ) +
+  theme_light()
+
+```
+
+### 6.5 Série temporal de casos explicada por temperatura máxima
+
+O gráfico abaixo apresenta a evolução temporal dos casos de dengue entre 2015 e 2025, com a linha colorida pela temperatura máxima registrada em cada semana epidemiológica. O gradiente de cores varia do verde (temperaturas mais baixas) ao vermelho (temperaturas mais altas), permitindo visualizar simultaneamente a progressão dos casos e as condições térmicas que os acompanham.
+
+_Período 2015–2019:_ Casos predominantemente baixos, com picos esporádicos. A coloração da linha mantém-se majoritariamente na faixa verde-amarelada, indicando temperaturas máximas entre 28°C e 32°C, sem variações extremas.
+
+_Período 2020–2022:_ Aumento gradual na frequência e magnitude dos picos. Observa-se que os picos mais expressivos (acima de 50 casos) ocorrem tanto em semanas com coloração amarela (temperaturas moderadas) quanto alaranjada (temperaturas mais altas), sem um padrão visual claro de associação.
+
+_Período 2023–2025:_ Concentração dos maiores picos da série (acima de 80 casos). A coloração da linha durante esses picos é variada: alguns ocorrem em temperaturas mais amenas (verde/amarelo), outros em temperaturas mais elevadas (laranja/vermelho). Não se observa claramente a predominância de uma faixa térmica específica nos momentos de maior incidência.
+
+```{r, warning=FALSE, message=FALSE}
+
+# serie temporal de casos por temperatura máxima
+
+ggplot(dengue_alagoinhas_2015_2025,
+       aes(x = data_iniSE, y = casos, color = tempmax_round)) +
+  geom_line() +
+  scale_color_gradient(low = "green", high = "red") +
+  geom_line(linewidth = 0.8) +
+  labs(
+    title = "Casos de dengue ao longo do tempo e temperatura máxima",
+    x = "Tempo",
+    y = "Casos",
+    color = "Temp. máxima"
+  ) +
+  theme_light()
+
+```
+
+### 6.6 Série temporal de variáveis multicolineares
+
+
+A análise das séries temporais das variáveis climáticas complementa as investigações anteriores ao incorporar a dimensão temporal ao comportamento das temperaturas e umidades que serviram como preditoras nas análises de correlação e modelagem. 
+
+As variáveis aqui apresentadas – temperaturas (média, máxima e mínima) e umidades (média, máxima e mínima) – são _intrinsecamente correlacionadas entre si, caracterizando o fenômeno da multicolinearidade._  
+
+Os gráficos a seguir permitem observar:
+
+- A sazonalidade anual de cada conjunto de variáveis;
+
+- A amplitude de variação entre os valores máximos e mínimos;
+
+- Possíveis tendências de longo prazo (aquecimento, aumento da umidade, etc.);
+
+- Períodos atípicos ou eventos extremos;
+
+- As lacunas correspondentes às semanas com dados ausentes.
+
+A compreensão desses padrões é fundamental para contextualizar os resultados das modelagens e para subsidiar hipóteses sobre os mecanismos pelos quais o clima influencia a dinâmica da dengue no município.
+
+#### 6.6.1 Temperatura
+
+
+O gráfico abaixo apresenta a evolução temporal das temperaturas média, máxima e mínima ao longo das 575 semanas epidemiológicas. As três séries exibem oscilações regulares e sincronizadas, refletindo o ciclo sazonal anual típico da região: picos no verão (dezembro–março) e vales no inverno (junho–setembro). A temperatura máxima mantém-se predominantemente entre 28°C e 33°C, a mínima entre 19°C e 24°C, e a média entre 22°C e 28°C. Não se observa tendência clara de aquecimento ou resfriamento ao longo da década – as oscilações anuais mantêm-se em patamares semelhantes de 2015 a 2025. As pequenas interrupções nas linhas correspondem às 20 semanas com dados ausentes, ignoradas na plotagem.
+
+Do ponto de vista epidemiológico, a estabilidade térmica observada indica que as temperaturas em Alagoinhas mantêm-se permanentemente dentro da faixa favorável ao desenvolvimento do _Aedes aegypti_ (20–30°C). Não há períodos de frio ou calor extremo prolongados que possam atuar como fatores limitantes da transmissão. Este padrão contrasta com a variabilidade dos casos de dengue, que apresentaram aceleração nos últimos anos, sugerindo que a temperatura, por ser consistentemente favorável, não é o fator determinante para os picos epidêmicos – outros elementos (umidade, circulação viral, densidade vetorial) podem exercer papel mais relevante na dinâmica da doença.
+
+```{r, warning=FALSE, message=FALSE}
+
+# serie temporal de temperatura
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = data_iniSE)) +
+  geom_line(aes(y = tempmed_round, color = "Temperatura Média"), linewidth = 0.7) +
+  geom_line(aes(y = tempmax_round, color = "Temperatura Máxima"), linewidth = 0.7) +
+  geom_line(aes(y = tempmin_round, color = "Temperatura Mínima"), linewidth = 0.7) +
+  scale_color_manual(
+    values = c(
+      "Temperatura Média" = "#2E86AB",
+      "Temperatura Máxima" = "#A23B72",
+      "Temperatura Mínima" = "#F18F01"
+    )
+  ) +
+  labs(
+    title = "Série temporal das temperaturas em Alagoinhas (2015–2025)",
+    subtitle = "Temperaturas média, máxima e mínima semanais",
+    x = "Data (início da semana epidemiológica)",
+    y = "Temperatura (°C)",
+    color = "Variável"
+  ) +
+  theme_light() +
+  theme(legend.position = "bottom")
+
+```
+
+
+#### 6.6.2 Amplitude das temperaturas
+
+_group_by(ano):_ Agrupa os dados por ano, para que as operações seguintes sejam aplicadas separadamente a cada ano.
+
+_summarise():_ Cria um resumo com as seguintes métricas para cada ano:
+
+_tempmed_amplitude:_ Calcula a amplitude (variação) da temperatura média subtraindo o valor mínimo do valor máximo registrado no ano. O argumento na.rm = TRUE ignora valores ausentes.
+
+_tempmax_amplitude e tempmin_amplitude:_ O mesmo cálculo para as temperaturas máxima e mínima.
+
+_temp_max_absoluta e temp_min_absoluta:_ Identificam os valores extremos absolutos de cada ano.
+
+_tempmed_media_anual:_ Calcula a média anual da temperatura média.
+
+_n_semanas:_ Conta quantas semanas em cada ano têm dados válidos (útil para verificar se algum ano tem muitas falhas).
+
+O resultado é armazenado no objeto amplitude_temperaturas, que pode ser visualizado com _View_ ou _Head_.
+
+```{r, warning=FALSE, message=FALSE}
+
+# Amplitude anual para temperaturas
+
+amplitude_temperaturas <- dengue_alagoinhas_2015_2025 %>%
+  group_by(ano) %>%
+  summarise(
+    # Amplitude da temperatura média (variação dentro do ano)
+    tempmed_amplitude = max(tempmed_round, na.rm = TRUE) - min(tempmed_round, na.rm = TRUE),
+    
+    # Amplitude da temperatura máxima (variação dentro do ano)
+    tempmax_amplitude = max(tempmax_round, na.rm = TRUE) - min(tempmax_round, na.rm = TRUE),
+    
+    # Amplitude da temperatura mínima (variação dentro do ano)
+    tempmin_amplitude = max(tempmin_round, na.rm = TRUE) - min(tempmin_round, na.rm = TRUE),
+    
+    # Temperatura máxima absoluta do ano
+    temp_max_absoluta = max(tempmax_round, na.rm = TRUE),
+    
+    # Temperatura mínima absoluta do ano
+    temp_min_absoluta = min(tempmin_round, na.rm = TRUE),
+    
+    # Média anual da temperatura média
+    tempmed_media_anual = mean(tempmed_round, na.rm = TRUE),
+    
+    # Número de semanas com dados válidos
+    n_semanas = sum(!is.na(tempmed_round))
+  )
+
+View(amplitude_temperaturas)
+
+head(amplitude_temperaturas)
+```
+
+As amplitudes térmicas anuais – _definidas como a diferença entre o valor máximo e mínimo registrado em cada ano_ – revelam padrões importantes sobre a variabilidade climática em Alagoinhas ao longo da década. Observa-se que os anos de 2015 a 2022 apresentaram amplitudes relativamente estáveis para as três medidas de temperatura, com valores oscilando entre 3,2°C e 7,4°C, sem uma tendência clara de aumento ou diminuição. No entanto, a partir de 2023, registra-se uma elevação consistente nas amplitudes, especialmente para a temperatura máxima, que atingiu 7,5°C em 2023 e 2024, e alcançou 8,0°C em 2025 – o maior valor da década. 
+A temperatura mínima também apresentou pico em 2023 (7,0°C), enquanto a temperatura média acompanhou essa tendência com amplitudes de 6,5°C em 2023 e 2025.
+
+Este aumento na variabilidade térmica intra-anual nos últimos anos sugere maior oscilação entre períodos de calor intenso e temperaturas mais amenas dentro de um mesmo ano. Do ponto de vista epidemiológico, esta maior amplitude pode criar condições alternadas que, embora não alterem a média anual, expõem a população vetorial a flutuações térmicas mais pronunciadas, potencialmente afetando ciclos de reprodução e sobrevivência do Aedes aegypti. A coincidência entre este aumento de variabilidade e a aceleração dos casos de dengue em 2023–2025 merece atenção, indicando que não apenas os valores médios, mas também a oscilação térmica intra-anual pode ser um fator relevante na dinâmica da doença.
+
+```{r, warning=FALSE, message=FALSE}
+
+# gráfico de amplitude das temperaturas
+
+ggplot(amplitude_temperaturas, aes(x = ano)) +
+  geom_line(aes(y = tempmed_amplitude, color = "Temp. Média", group = 1), linewidth = 1) +
+  geom_line(aes(y = tempmax_amplitude, color = "Temp. Máxima", group = 1), linewidth = 1) +
+  geom_line(aes(y = tempmin_amplitude, color = "Temp. Mínima", group = 1), linewidth = 1) +
+  labs(
+    title = "Amplitude anual das temperaturas em Alagoinhas",
+    x = "Ano",
+    y = "Amplitude (°C)",
+    color = "Variável"
+  ) +
+  theme_light()
+```
+
+
+#### 6.6.3 Umidade
+
+O gráfico abaixo apresenta a evolução temporal das umidades média, máxima e mínima ao longo das 575 semanas epidemiológicas. As três séries exibem oscilações regulares, refletindo o ciclo sazonal anual: períodos úmidos (outono/inverno) e períodos mais secos (primavera/verão). A umidade máxima mantém-se persistentemente elevada, frequentemente acima de 85% e com picos regulares próximos a 100%, indicando condições recorrentes de saturação do ar. A umidade média oscila predominantemente entre 65% e 85%, enquanto a umidade mínima apresenta maior variabilidade, com valores entre 40% e 70%, ocasionalmente atingindo patamares inferiores a 40% em períodos mais secos.
+
+Observa-se uma tendência de concentração de semanas com umidade máxima extremamente elevada (>95%) nos anos de 2023 a 2025, período que coincide com a aceleração dos casos de dengue. As interrupções nas linhas correspondem às 21 semanas com dados ausentes ou inconsistentes (incluindo o outlier de 173,2% substituído por NA), que foram ignoradas na plotagem.
+
+Do ponto de vista epidemiológico, a umidade máxima persistentemente alta cria condições ambientais altamente propícias à proliferação do _Aedes aegypti_, pois ambientes saturados de umidade potencializam a sobrevivência dos ovos e a longevidade dos mosquitos adultos. A intensificação dos valores extremos nos anos recentes alinha-se visualmente com o aumento da incidência da doença, reforçando os resultados das análises de correlação (ρ = 0,48; p < 0,001) e sugerindo que a umidade, diferentemente da temperatura, é um fator climático relevante para explicar a dinâmica dos surtos em Alagoinhas.
+
+```{r, warning=FALSE, message=FALSE}
+
+# serie temporal de umidade
+
+ggplot(dengue_alagoinhas_2015_2025, aes(x = data_iniSE)) +
+  geom_line(aes(y = umidmed_round, color = "Umidade Média"), linewidth = 0.7) +
+  geom_line(aes(y = umidmax_round, color = "Umidade Máxima"), linewidth = 0.7) +
+  geom_line(aes(y = umidmin_round, color = "Umidade Mínima"), linewidth = 0.7) +
+  scale_color_manual(
+    values = c(
+      "Umidade Média" = "#2E86AB",
+      "Umidade Máxima" = "#A23B72",
+      "Umidade Mínima" = "#F18F01"
+    )
+  ) +
+  labs(
+    title = "Série temporal das umidades em Alagoinhas (2015–2025)",
+    subtitle = "Umidades média, máxima e mínima semanais",
+    x = "Data (início da semana epidemiológica)",
+    y = "Umidade (%)",
+    color = "Variável"
+  ) +
+  theme_light() +
+  theme(legend.position = "bottom")
+```
+
+
+
+#### 6.6.4 Amplitude da umidade
+
+
+_group_by(ano):_ Novamente agrupa os dados por ano.
+
+_summarise():_ Cria um resumo análogo ao anterior, mas agora para as variáveis de umidade:
+
+_umidmed_amplitude, umidmax_amplitude, umidmin_amplitude:_ Amplitudes anuais (máximo - mínimo) para cada medida de umidade.
+
+_umid_max_absoluta e umid_min_absoluta:_ Valores extremos de umidade em cada ano.
+
+_umidmed_media_anual:_ Média anual da umidade média.
+
+_n_semanas:_ Contagem de semanas com dados válidos por ano.
+
+O resultado é armazenado no objeto amplitude_umidades.
+
+
+```{r}
+# amplitude anual para umidades
+
+amplitude_umidades <- dengue_alagoinhas_2015_2025 %>%
+  group_by(ano) %>%
+  summarise(
+    # Amplitude da umidade média (variação dentro do ano)
+    umidmed_amplitude = max(umidmed_round, na.rm = TRUE) - min(umidmed_round, na.rm = TRUE),
+    
+    # Amplitude da umidade máxima (variação dentro do ano)
+    umidmax_amplitude = max(umidmax_round, na.rm = TRUE) - min(umidmax_round, na.rm = TRUE),
+    
+    # Amplitude da umidade mínima (variação dentro do ano)
+    umidmin_amplitude = max(umidmin_round, na.rm = TRUE) - min(umidmin_round, na.rm = TRUE),
+    
+    # Umidade máxima absoluta do ano
+    umid_max_absoluta = max(umidmax_round, na.rm = TRUE),
+    
+    # Umidade mínima absoluta do ano
+    umid_min_absoluta = min(umidmin_round, na.rm = TRUE),
+    
+    # Média anual da umidade média
+    umidmed_media_anual = mean(umidmed_round, na.rm = TRUE),
+    
+    # Número de semanas com dados válidos
+    n_semanas = sum(!is.na(umidmed_round))
+  )
+
+View(amplitude_umidades)
+
+head(amplitude_umidades)
+```
+
+As amplitudes anuais das umidades apresentam comportamento distinto e mais heterogêneo que o das temperaturas. A umidade mínima destaca-se como a medida de maior variabilidade, com picos expressivos em 2023 (48 pontos percentuais) e valores igualmente elevados em 2024 e 2025 (37 pontos). Estes números indicam anos com oscilações extremas entre períodos muito secos (umidade mínima baixa) e períodos de alta umidade, criando condições ambientais que alternam entre estresse hídrico para o vetor e condições altamente favoráveis à sua proliferação. A amplitude excepcional de 2023 sugere um ano atípico, com variações bruscas que podem ter contribuído para a intensificação dos surtos observados no período.
+
+A umidade máxima apresentou picos de amplitude em 2017 (27%) e 2022 (28%), mas nos anos recentes (2023–2025) manteve-se em patamares mais baixos (entre 12% e 22%), indicando que a variabilidade da umidade máxima não aumentou – pelo contrário, tornou-se mais estável. Já a umidade média mostrou amplitudes moderadas ao longo de toda a década, com valores entre 16 e 27 pontos percentuais, sem tendência clara.
+
+```{r, warning=FALSE, message=FALSE}
+
+#gráfico de amplitude da umidade
+
+ggplot(amplitude_umidades, aes(x = ano)) +
+  geom_line(aes(y = umidmed_amplitude, color = "Umid. Média", group = 1), linewidth = 1) +
+  geom_line(aes(y = umidmax_amplitude, color = "Umid. Máxima", group = 1), linewidth = 1) +
+  geom_line(aes(y = umidmin_amplitude, color = "Umid. Mínima", group = 1), linewidth = 1) +
+  labs(
+    title = "Amplitude anual da umidade em Alagoinhas",
+    x = "Ano",
+    y = "Amplitude (%)",
+    color = "Variável"
+  ) +
+  theme_light()
+```
+
+
+
+# 7 DECOMPOSIÇÃO DE SÉRIES TEMPORAIS
+
+### 7.1 Decomposição da série histórica de casos
+
+A decomposição STL _(Seasonal and Trend decomposition using Loess)_ separa a série temporal em três componentes fundamentais: 
+
+- 1 tendência de longo prazo; 
+
+- 2 sazonalidade (padrão que se repete anualmente;
+
+- 3 resíduo (variações irregulares não explicadas pelos dois primeiros). 
+
+O gráfico gerado apresenta quatro painéis:
+
+_data:_ série original de casos semanais.
+
+_trend:_ componente de tendência, suavizada.
+
+_season_52:_ componente sazonal com período de 52 semanas (um ano).
+
+_remainder:_ componente residual.
+
+```{r}
+
+# converter base para tsibble
+
+dengue_ts <- dengue_alagoinhas_2015_2025 %>%
+  as_tsibble(index = data_iniSE)
+
+
+# verifica lacunas TRUE-FALSE no arquivo tsibble
+
+has_gaps(dengue_ts)
+
+# incrementando 0 nas lacunas
+
+dengue_ts_completo <- dengue_ts %>%
+  fill_gaps(casos = 0, .full = TRUE)
+
+# aplicando STL
+
+stl_model <- dengue_ts_completo %>%
+  model(
+    STL(casos ~ season(period = 52), robust = TRUE)
+  )
+
+# extraindo e visualizando componentes
+
+
+stl_components <- stl_model %>% components()
+
+stl_components %>%
+  autoplot() +
+  labs(title = "Decomposição STL dos casos de dengue em Alagoinhas (2015–2025)")
+```
+
+*1. Componente de Tendência (trend)*
+
+A linha de tendência revela o movimento de fundo da série, livre das flutuações sazonais e de ruídos de curto prazo.
+
+2015–2017: Tendência relativamente estável e baixa, com valores próximos de zero. Isso indica que, nesse período, a dengue manteve-se em níveis endêmicos controlados, sem grandes surtos.
+
+2018–2019: Leve elevação gradual, atingindo cerca de 5 casos na escala da tendência. Corresponde ao início de um aumento na atividade da doença, possivelmente relacionado a mudanças climáticas ou na circulação viral.
+
+2020–2022: A tendência acelera de forma mais pronunciada, subindo para aproximadamente 10–15 casos. Esse período coincide com a pandemia de COVID-19, que pode ter afetado a vigilância, a notificação e as medidas de controle. Além disso, fatores ambientais podem ter contribuído.
+
+2023–2025: A tendência atinge seu pico, chegando a cerca de 20–25 casos na escala da tendência. A aceleração é clara e sustentada, indicando um aumento estrutural na incidência da dengue. Esse é um achado crucial: não se trata apenas de surtos esporádicos, mas de uma mudança no patamar endêmico.
+
+A tendência ascendente, especialmente acentuada a partir de 2020, sugere que fatores de longo prazo (como mudanças climáticas, urbanização, circulação de novos sorotipos ou relaxamento das medidas de controle) estão impulsionando a transmissão. A tendência não é linear, mas sim uma curva ascendente, o que reforça a necessidade de políticas de vigilância e controle mais robustas e adaptadas a esse novo cenário.
+
+*2. Componente Sazonal (season_52)*
+
+O componente sazonal mostra o padrão regular que se repete a cada ano, com valores positivos indicando períodos de acima da tendência e negativos abaixo.
+
+Forma do padrão: Observam-se ondas regulares, com picos positivos (acima da tendência) em determinadas épocas do ano e vales negativos em outras. A amplitude das ondas parece variar ao longo do tempo, o que é uma vantagem do STL (permite sazonalidade variável).
+
+Pico sazonal: Os picos ocorrem consistentemente em meados do ano, alinhados com os meses de junho a setembro (inverno e início da primavera no hemisfério sul). Isso confirma a análise anterior da distribuição mensal.
+
+Intensidade: A amplitude do componente sazonal parece aumentar nos últimos anos (especialmente 2023–2025), indicando que a sazonalidade está se tornando mais pronunciada. Ou seja, os picos estão mais altos e os vales mais baixos, o que pode refletir condições ambientais mais extremas ou maior susceptibilidade da população.
+
+A dengue em Alagoinhas apresenta uma sazonalidade bem definida, com transmissão intensificada no período de inverno/primavera. Esse padrão é típico de regiões com clima tropical/subtropical, onde as condições de temperatura e umidade após as chuvas de outono/inverno favorecem a proliferação do Aedes aegypti. A intensificação recente da sazonalidade pode estar associada a mudanças no regime de chuvas ou a um aumento na população vetorial.
+
+*3. Componente Residual (remainder)*
+
+O resíduo representa as flutuações que não são explicadas pela tendência nem pela sazonalidade. Idealmente, deve ser um ruído branco (aleatório), mas picos indicam eventos atípicos.
+
+Antes de 2020: Os resíduos são geralmente pequenos, com poucos picos isolados, indicando que a maior parte da variação era capturada pela tendência e sazonalidade.
+
+2020–2022: Alguns picos residuais positivos aparecem, sugerindo que alguns surtos pontuais não foram completamente explicados pelos componentes regulares.
+
+2023–2025: Os resíduos tornam-se mais pronunciados e frequentes, com picos positivos elevados. Isso indica que, nos últimos anos, ocorreram semanas com número de casos muito acima do esperado pela tendência e sazonalidade – verdadeiros surtos excepcionais.
+
+Os resíduos altos são os "eventos extraordinários" – provavelmente os picos epidêmicos mais severos. A concentração desses resíduos nos anos recentes sugere que a epidemia está se tornando mais imprevisível e com surtos mais intensos, possivelmente devido a fatores como introdução de novos sorotipos, condições climáticas extremas ou falhas no controle vetorial.
+
+```{r}
+
+# Para ver a força da sazonalidade e tendência (features)
+
+stl_features <- dengue_ts %>%
+  features(casos, feat_stl, period = 52)
+
+print(stl_features)
+```
+
+
+
+# 8 MODELAGEM ESTATÍSTICA
+
+
+Após a análise exploratória que identificou associações relevantes entre as variáveis climáticas e os casos de dengue, procedeu-se à modelagem estatística com o objetivo de quantificar essas relações e avaliar sua significância em um contexto preditivo. Foram ajustados modelos de regressão linear simples, tendo como variável resposta o número semanal de casos e como preditoras, separadamente, a umidade máxima e a temperatura máxima – variáveis que se destacaram nas análises de correlação.
+
+### 8.1 Casos x Umidade máxima
+
+O primeiro modelo ajustado avaliou a relação entre os casos de dengue e a umidade máxima semanal. A escolha desta variável baseou-se na correlação moderada e significativa identificada anteriormente (ρ = 0,48; p < 0,001) e na relevância epidemiológica da umidade para a proliferação do Aedes aegypti.
+
+```{r}
+lm(casos ~ umidmax_round,
+   data = dengue_alagoinhas_2015_2025)
+
+summary(lm(casos ~ umidmax_round,
+           data = dengue_alagoinhas_2015_2025))
+```
+
+Medidas de ajuste:
+
+R² múltiplo: 0,1754
+
+R² ajustado: 0,1739
+
+Erro padrão residual: 17,03 (552 graus de liberdade)
+
+Estatística F: 117,4 (p < 2,2e-16)
+
+Observações: 554 (21 deletadas por missing)
+
+
+O coeficiente angular de 1,485 indica que, _para cada aumento de 1 ponto percentual na umidade máxima, espera-se um acréscimo médio de aproximadamente 1,5 casos semanais de dengue,_ mantidos os demais fatores constantes. Esta relação é altamente significativa (p < 0,001), confirmando estatisticamente a associação observada na análise exploratória.
+
+O intercepto negativo (-120,169) não possui interpretação prática direta, pois representa a predição para uma umidade de 0% – situação impossível na realidade meteorológica. Sua presença é um artefato matemático comum em modelos de regressão quando a variável preditora não inclui o zero em seu domínio observado.
+
+
+O R² de 0,1754 indica que aproximadamente 17,5% da variabilidade dos casos semanais é explicada pela umidade máxima isoladamente. Este valor, embora moderado, é notável considerando-se a complexidade multifatorial da dengue, que envolve determinantes biológicos, ambientais, sociais e operacionais. A umidade máxima emerge, portanto, como um fator relevante, mas não exclusivo, na dinâmica da doença.
+
+O teste F altamente significativo (p < 2,2e-16) confirma que o modelo como um todo é estatisticamente superior a um modelo nulo (sem preditores), validando a inclusão da umidade máxima como variável explicativa.
+
+A mediana dos resíduos (-4,445) próxima de zero sugere que o modelo não apresenta viés sistemático. No entanto, a amplitude dos resíduos (de -25,33 a 84,73) e a presença de valores extremos positivos elevados indicam que o modelo subestima significativamente os casos em semanas de surto – algo esperado, dado que a umidade sozinha não captura toda a complexidade dos picos epidêmicos.
+
+Este padrão reforça a necessidade de modelos multivariados que incorporem outros preditores (como Rt e nível de alerta) para melhorar a capacidade preditiva.
+
+
+
+### 8.2 Casos x Temperatura Máxima
+
+O segundo modelo avaliou a relação entre os casos de dengue e a temperatura máxima semanal, com base na correlação muito fraca e não significativa identificada anteriormente (ρ = 0,06; p = 0,165). O objetivo foi confirmar, em termos quantitativos, a ausência de associação detectável.
+
+```{r}
+lm(casos ~ tempmax_round,
+   data = dengue_alagoinhas_2015_2025)
+summary(lm(casos ~ tempmax_round,
+           data = dengue_alagoinhas_2015_2025))
+```
+
+
+Medidas de ajuste:
+
+R² múltiplo: 0,00009585 (aproximadamente 0,01%)
+
+R² ajustado: -0,001712 (negativo)
+
+Erro padrão residual: 18,75 (553 graus de liberdade)
+
+Estatística F: 0,05301 (p = 0,818)
+
+Observações: 555 (20 deletadas por missing)
+
+
+O coeficiente angular de 0,088 é praticamente nulo, indicando que, _dentro da faixa de temperatura observada em Alagoinhas (predominantemente entre 28°C e 33°C), a variação da temperatura máxima não produz efeito detectável sobre o número de casos._ O p-valor de 0,818 é altíssimo, muito acima do limiar convencional de 0,05, indicando que não há evidências estatísticas para rejeitar a hipótese nula de ausência de relação.
+
+O intercepto (7,60) representa a predição para temperatura zero – situação irrelevante – e também não é significativo (p = 0,479).
+
+O R² de aproximadamente 0,01% (praticamente zero) indica que a temperatura máxima não explica absolutamente nada da variabilidade dos casos. O R² ajustado negativo é um indicador técnico de que o modelo é pior do que simplesmente usar a média dos casos como preditor – ou seja, a inclusão da temperatura máxima piora a capacidade preditiva em vez de melhorá-la.
+
+O teste F com p = 0,818 confirma que o modelo não é estatisticamente diferente de um modelo nulo, reforçando a conclusão de que a temperatura máxima, isoladamente, não é um fator relevante para explicar a incidência de dengue em Alagoinhas.
+
+
+A mediana dos resíduos (-7,545) é mais afastada de zero que no modelo anterior, e a amplitude é ainda maior (de -10,51 a 92,67), indicando pior ajuste. Os resíduos positivos elevados novamente apontam para a subestimação dos picos epidêmicos.
+
+
+
+# 9. CONCLUSÃO
+
+A presente análise exploratória dos dados de dengue em Alagoinhas, abrangendo 575 semanas epidemiológicas entre 2015 e 2025, permitiu traçar um panorama abrangente e detalhado do comportamento da doença no município, integrando dimensões estatísticas, temporais, climáticas e epidemiológicas. 
+
+Ao longo deste trabalho, foram aplicadas técnicas que vão desde a estatística descritiva básica até métodos avançados de decomposição de séries temporais e modelagem de regressão, sempre com o cuidado de adequar a escolha metodológica à natureza dos dados e ao contexto do problema. Os resultados obtidos não apenas confirmam hipóteses epidemiológicas consolidadas, mas também revelam padrões emergentes que merecem atenção da vigilância em saúde e abrem caminho para investigações futuras.
+
+
+### 9.1 Síntese das análises
+
+_Distribuição dos casos e perfil epidemiológico:_ A distribuição do número de casos de dengue apresentou forte assimetria positiva (2,9) e curtose elevada (8,7), com média de 9,8 casos por semana e mediana de apenas 3,0. Este padrão é característico de doenças endêmicas transmitidas por vetores, onde _longos períodos de baixa incidência são intercalados por surtos epidêmicos de alta magnitude._ A presença de outliers numerosos e expressivos nos boxplots confirmou visualmente esta dinâmica, com picos que ultrapassaram 80 casos em diversas semanas, especialmente nos anos finais da série.
+
+_Comportamento das variáveis climáticas:_ As temperaturas em Alagoinhas mostraram-se notavelmente estáveis ao longo da década, com a média oscilando entre 22°C e 28°C, a máxima entre 28°C e 33°C, e a mínima entre 19°C e 24°C. Não se observou tendência clara de aquecimento ou resfriamento, indicando que _o município mantém condições térmicas permanentemente favoráveis ao desenvolvimento do Aedes aegypti._ As umidades, por outro lado, apresentaram comportamento mais heterogêneo: a umidade máxima manteve-se persistentemente elevada (frequentemente acima de 85%, com picos próximos a 100%), enquanto a umidade mínima exibiu maior variabilidade, com valores ocasionalmente abaixo de 40% em períodos mais secos. A análise das amplitudes anuais revelou um aumento na variabilidade da umidade mínima nos anos de 2023 a 2025, com pico expressivo de 48 pontos percentuais em 2023, indicando oscilações extremas entre períodos muito secos e muito úmidos.
+
+_Associações entre casos e variáveis explicativas:_ A análise de correlação, conduzida prioritariamente com o coeficiente de Spearman devido à assimetria dos dados, evidenciou associações epidemiologicamente relevantes. A correlação mais forte observada foi entre casos e nível de alerta epidemiológico (ρ = 0,71; p < 0,001), validando a consistência do sistema de vigilância e demonstrando que _a classificação por níveis reflete adequadamente a intensidade da transmissão._ A forte correlação entre casos e Rt (ρ = 0,64; p < 0,001) confirmou o Rt como um indicador sensível da dinâmica de transmissão, capaz de capturar tanto períodos de crescimento quanto de declínio da epidemia. Entre as variáveis climáticas, a umidade máxima destacou-se com correlação moderada e significativa (ρ = 0,48; p < 0,001), sugerindo que _períodos de alta umidade – geralmente associados a chuvas – criam condições ambientais favoráveis à proliferação do vetor e à ocorrência de casos._ A temperatura máxima, por outro lado, não apresentou correlação significativa (ρ = 0,06; p = 0,165), indicando que, dentro da faixa térmica observada, este fator não atua como limitante ou disparador de surtos.
+
+_Padrões temporais e sazonais:_ A série temporal de casos revelou uma tendência de aceleração a partir de 2020, com crescimento mais acentuado entre 2023 e 2025 – período em que a mediana anual e a variabilidade atingiram os maiores patamares da década. A distribuição mensal dos casos confirmou uma _sazonalidade bem definida, com pico de transmissão concentrado entre junho e setembro (inverno e início da primavera), alinhada com o período pós-chuvas na região. Esta janela sazonal deve ser priorizada para ações preventivas e de controle vetorial._ A decomposição STL aprofundou estes achados, separando a série em componentes interpretáveis: a tendência apresentou força muito alta (0,925), confirmando o aumento estrutural da doença; a sazonalidade mostrou força moderada (0,161), ofuscada pela variabilidade dos resíduos nos últimos anos; e os resíduos elevados em 2023–2025 indicaram surtos excepcionais não explicados pela tendência e sazonalidade. _A ausência de registros de nível 3 na base sugere uma transição rápida entre a situação de atenção (nível 2) e a emergência (nível 4),_ hipótese que merece investigação com séries temporais mais refinadas e análise dos critérios de classificação adotados.
+
+_Modelagem estatística:_ Os modelos de regressão linear simples confirmaram quantitativamente as relações identificadas na análise exploratória. O modelo com umidade máxima como preditora mostrou-se significativo (p < 0,001), com coeficiente de 1,485, indicando que, _em média, um aumento de 1 ponto percentual na umidade máxima está associado a um acréscimo de aproximadamente 1,5 casos semanais._ O R² de 0,175, embora moderado, é consistente com a natureza multifatorial da dengue, indicando que _a umidade máxima explica cerca de 17,5% da variabilidade dos casos._ O modelo com temperatura máxima, por outro lado, não apresentou significância (p = 0,818) e R² próximo de zero, corroborando a ausência de relação detectável. A análise de colinearidade entre as variáveis climáticas confirmou a alta correlação intra-grupos, justificando a abordagem de seleção de variáveis representantes (temperatura média e umidade máxima) para modelos múltiplos futuros.
+
+### 9.2 Implicações para a vigilância e controle
+
+Os resultados deste estudo oferecem subsídios concretos para o aprimoramento das ações de vigilância e controle da dengue em Alagoinhas:
+
+1. _Monitoramento do Rt como indicador de alerta precoce:_ A forte correlação entre Rt e casos, aliada à sua natureza (o Rt tipicamente antecede os casos em algumas semanas), recomenda a incorporação sistemática deste indicador nos boletins epidemiológicos e em sistemas de alerta. _Semanas com Rt > 1 devem acionar protocolos de intensificação da vigilância e do controle vetorial._
+
+2. _Foco na janela sazonal de transmissão:_ O pico consistente entre junho e setembro indica que as _ações preventivas (mutirões de limpeza, campanhas de conscientização, intensificação do trabalho dos agentes de endemias) devem ser intensificadas nos meses que antecedem este período, especialmente entre março e maio._ A alocação de recursos e o planejamento de campanhas podem ser otimizados com base neste padrão sazonal.
+
+3. _Atenção à umidade como fator de risco:_ A associação significativa entre umidade máxima e casos sugere que _períodos com umidade persistentemente elevada (especialmente acima de 90%) merecem monitoramento diferenciado._ A integração de dados climáticos em tempo real aos sistemas de vigilância pode permitir a emissão de alertas baseados em condições ambientais propícias à transmissão.
+
+4. _Reconhecimento da mudança no patamar endêmico:_ A tendência de aceleração nos últimos anos indica que _o patamar endêmico da doença em Alagoinhas pode estar se elevando._ Este achado tem implicações para o planejamento de longo prazo, incluindo a _necessidade de fortalecimento permanente da capacidade de resposta do sistema de saúde,_ e não apenas ações pontuais em períodos de surto.
+
+5. _Investigação da ausência do nível 3:_ A inexistência de registros de nível 3 na base de dados merece investigação aprofundada. Pode refletir uma _característica epidemiológica do município (transição rápida entre atenção e emergência) ou uma limitação do sistema de classificação._ Em qualquer caso, recomenda-se a revisão dos critérios de atribuição dos níveis e, se necessário, o ajuste dos algoritmos para melhor capturar estágios intermediários de alerta.
+
+### 9.3 Limitações das análises
+
+É importante reconhecer as limitações deste trabalho, que devem ser consideradas na interpretação dos resultados e no planejamento de análises futuras:
+
+1. _Natureza ecológica do estudo:_ As análises foram conduzidas em nível agregado (semanal e municipal), não permitindo inferências sobre relações causais em nível individual. Associações observadas entre variáveis climáticas e casos podem ser mediadas por fatores não incluídos no modelo, como densidade vetorial, cobertura de ações de controle e circulação de sorotipos virais.
+
+2. _Defasagens temporais não modeladas:_ As análises de correlação e regressão consideraram apenas relações contemporâneas entre variáveis. Sabe-se que o efeito de fatores climáticos sobre a incidência de dengue pode ocorrer com defasagem de semanas a meses. A não incorporação destas defasagens pode subestimar a força das associações e ocultar relações causais importantes.
+
+3. _Dados ausentes e qualidade dos registros:_ Embora a proporção de dados ausentes seja pequena (20 semanas para temperaturas, 21 para umidade máxima), sua presença pode introduzir vieses, especialmente se as falhas não forem aleatórias. A qualidade dos dados secundários depende da consistência da notificação e do preenchimento, aspectos que não puderam ser controlados.
+
+4. _Modelos univariados e poder explicativo limitado:_ Os modelos de regressão apresentados, embora estatisticamente significativos, explicam parcela modesta da variabilidade dos casos (R² em torno de 17%). Isto reflete a complexidade inerente à dengue, que é influenciada por múltiplos fatores biológicos, ambientais, sociais e operacionais. Modelos mais abrangentes, incluindo variáveis como densidade vetorial, cobertura de saneamento e indicadores socioeconômicos, seriam necessários para aumentar o poder explicativo.
+
+5. _Generalização restrita:_ Os padrões identificados são específicos do município de Alagoinhas e do período analisado. Embora possam ser comparados com estudos de outras regiões, sua generalização para outros contextos deve ser feita com cautela, respeitando as particularidades climáticas, ecológicas e sociodemográficas de cada localidade.
+
+### 9.4 Desdobramentos
+
+Os achados e as limitações deste estudo apontam para diversas direções de investigação futura, que podem aprofundar a compreensão da dinâmica da dengue em Alagoinhas e subsidiar ações de controle mais efetivas.
+
+
+### 9.5 Considerações finais
+
+Esta análise exploratória atingiu seu objetivo de caracterizar o comportamento da dengue em Alagoinhas ao longo de uma década, identificando padrões epidemiológicos e climáticos relevantes e quantificando associações entre variáveis. Mais do que um retrato estático, o trabalho oferece uma base metodológica e analítica para o monitoramento contínuo e para o aprofundamento de investigações futuras.
+
+A combinação de técnicas estatísticas clássicas com métodos modernos de análise de séries temporais, sempre ancorada na interpretação substantiva dos resultados à luz do conhecimento epidemiológico, demonstra a abordagem adotada. O código e os procedimentos foram desenvolvidos com foco na reprodutibilidade, permitindo que outros pesquisadores, estudantes e gestores repliquem, adaptem e atualizem a análise conforme suas necessidades.
+
+Espera-se que os insights gerados possam contribuir para a qualificação do debate sobre políticas de prevenção e controle da dengue em Alagoinhas e região, subsidiando decisões baseadas em evidências e fortalecendo a capacidade de resposta do sistema de saúde municipal. 
+
+A dengue continuará sendo um desafio, mas o conhecimento aprofundado de seu comportamento histórico é ferramenta indispensável para enfrentá-lo com maior eficácia e eficiência.
+
 
